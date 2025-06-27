@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
+
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - appnet
+
+  jwttool-worker:
+    build:
+      context: ./jwttool-worker
+    volumes:
+      - ./jwttool-worker:/app
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
