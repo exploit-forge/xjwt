@@ -25,7 +25,11 @@ Run the server:
 node index.js
 ```
 
-Tests are not yet implemented.
+Run tests:
+
+```bash
+npm test
+```
 
 # JWT Pentest Studio
 
@@ -85,7 +89,12 @@ cd frontend
 npm test
 ```
 
-Backend tests can be run with your chosen Node test framework once added.
+Run backend tests with npm:
+
+```
+cd backend
+npm test
+```
 
 Further instructions will be added alongside the codebase and Docker configuration.
 
