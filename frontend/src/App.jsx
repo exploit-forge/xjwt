@@ -20,7 +20,11 @@ function JWTEditor() {
 
   const encode = () => {
     try {
-      const encHead = btoa(unescape(encodeURIComponent(header)))
+      const headerObj = JSON.parse(header)
+      headerObj.alg = algorithm
+      const updatedHeader = JSON.stringify(headerObj, null, 2)
+      setHeader(updatedHeader)
+      const encHead = btoa(unescape(encodeURIComponent(updatedHeader)))
       const encPay = btoa(unescape(encodeURIComponent(payload)))
       const unsigned = `${encHead}.${encPay}`
       setToken(`${unsigned}.${signature}`)
