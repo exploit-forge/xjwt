@@ -2,10 +2,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const cors = require('cors');
-const { spawn } = require('child_process');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Connected Server-Sent Events clients
+const sseClients = new Set();
 
 app.use(cors());
 app.use(express.json());
@@ -64,7 +67,7 @@ app.post('/verify', [
   });
 }));
 
-// Start cracking job using jwttool-worker
+// Start cracking job using jwttool-worker service
 app.post('/crack', [
   body('token').isString().notEmpty(),
   body('wordlist').optional().isString(),
@@ -79,25 +82,37 @@ app.post('/crack', [
     Connection: 'keep-alive',
   });
 
-  const args = [token];
-  if (wordlist) args.push(wordlist);
-
-  const worker = spawn('jwttool-worker', args);
-  worker.stdout.on('data', data => {
-    res.write(`data: ${data.toString()}\n\n`);
-  });
-  worker.stderr.on('data', data => {
-    res.write(`data: ERROR ${data.toString()}\n\n`);
-  });
-  worker.on('close', code => {
-    res.write(`data: DONE code=${code}\n\n`);
-    res.end();
-  });
+  sseClients.add(res);
 
   req.on('close', () => {
-    worker.kill();
+    sseClients.delete(res);
   });
+
+  try {
+    await fetch('http://jwttool-worker:8000/crack', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, wordlist }),
+    });
+  } catch (err) {
+    res.write(`data: ERROR ${err.message}\n\n`);
+  } finally {
+    res.write('data: DONE\n\n');
+    res.end();
+    sseClients.delete(res);
+  }
 }));
+
+// Endpoint for worker to send log lines
+app.post('/worker/results', (req, res) => {
+  const { line } = req.body || {};
+  if (line) {
+    for (const client of sseClients) {
+      client.write(`data: ${line}\n\n`);
+    }
+  }
+  res.sendStatus(200);
+});
 
 // Global error handler
 app.use((err, req, res, next) => {
