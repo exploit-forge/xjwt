@@ -43,14 +43,14 @@ JWT Pentest Studio is a planned web application for inspecting and attacking JSO
 - Token forging: switch `alg`, adjust claims and re-sign tokens.
 - Default wordlist support if none is provided when cracking tokens.
 - React or Vue front‑end styled with Tailwind CSS.
-- Node/Express or FastAPI backend exposing verification and cracking endpoints.
+- Node/Express backend exposing verification and cracking endpoints.
 - Docker Compose layout with services for the frontend, API and `jwttool` worker.
 - UI modelled after JWT.io with copy buttons, a cracking section and dark/light theme.
 - Automated tests covering core features.
 
 ## Setup
 
-These instructions assume you have Docker and Node or Python tooling installed.
+These instructions assume you have Docker and Node.js installed.
 
 ### Docker Compose (once provided)
 
@@ -74,12 +74,10 @@ cd frontend
 npm install
 npm run build
 
-# Backend (FastAPI example)
+# Backend
 cd ../backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload
+npm install
+node index.js
 ```
 
 ### Running tests

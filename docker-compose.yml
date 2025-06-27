@@ -4,28 +4,33 @@ services:
   frontend:
     build:
       context: ./frontend
-    volumes:
-      - ./frontend:/app
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     networks:
       - appnet
 
   backend:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     volumes:
       - ./backend:/app
+    environment:
+      - PORT=8000
     ports:
       - "8000:8000"
+    environment:
+      - PORT=8000
     networks:
       - appnet
 
   jwttool-worker:
     build:
-      context: ./jwttool-worker
+      context: ./worker
+      dockerfile: Dockerfile
     volumes:
-      - ./jwttool-worker:/app
+      - ./worker:/app
     networks:
       - appnet
 
