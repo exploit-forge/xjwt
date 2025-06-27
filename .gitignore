@@ -1,0 +1,11 @@
+# Node
+node_modules/
+# Python
+__pycache__/
+*.py[cod]
+# Virtual environments
+venv/
+ENV/
+*.egg-info/
+# others
+.DS_Store
