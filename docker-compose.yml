@@ -18,14 +18,16 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
+    environment:
+      - PORT=8000
     networks:
       - appnet
 
   jwttool-worker:
     build:
-      context: ./jwttool-worker
+      context: ./worker
     volumes:
-      - ./jwttool-worker:/app
+      - ./worker:/app
     networks:
       - appnet
 
