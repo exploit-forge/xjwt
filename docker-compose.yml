@@ -6,7 +6,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_BACKEND_URL=http://backend:8000
+        - VITE_BACKEND_URL=http://localhost:8000
     ports:
       - "3000:80"
     networks:
