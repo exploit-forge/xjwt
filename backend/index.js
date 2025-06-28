@@ -67,14 +67,11 @@ app.post('/verify', [
   });
 }));
 
-// Start cracking job using jwttool-worker service
-app.post('/crack', [
-  body('token').isString().notEmpty(),
-  body('wordlist').optional().isString(),
-], asyncHandler(async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { token, wordlist } = req.body;
+// Start cracking job using jwttool-worker service via POST or GET (for SSE clients)
+const crackHandler = asyncHandler(async (req, res) => {
+  const token = req.method === 'GET' ? req.query.token : req.body.token;
+  const wordlist = req.method === 'GET' ? req.query.wordlist : req.body.wordlist;
+  if (!token) return res.status(400).json({ error: 'token required' });
 
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -89,11 +86,17 @@ app.post('/crack', [
   });
 
   try {
-    await fetch('http://jwttool-worker:8000/crack', {
+    const workerRes = await fetch('http://jwttool-worker:8000/crack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, wordlist }),
     });
+    const result = await workerRes.json();
+    if (result.secret) {
+      for (const client of sseClients) {
+        client.write(`data: RESULT ${JSON.stringify(result)}\n\n`);
+      }
+    }
   } catch (err) {
     res.write(`data: ERROR ${err.message}\n\n`);
   } finally {
@@ -101,7 +104,18 @@ app.post('/crack', [
     res.end();
     sseClients.delete(res);
   }
-}));
+});
+
+app.post('/crack', [
+  body('token').isString().notEmpty(),
+  body('wordlist').optional().isString(),
+], (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  crackHandler(req, res).catch(next);
+});
+
+app.get('/crack', crackHandler);
 
 // Endpoint for worker to send log lines
 app.post('/worker/results', (req, res) => {
