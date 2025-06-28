@@ -8,5 +8,6 @@ RUN git clone https://github.com/ticarpi/jwt_tool /opt/jwt_tool \
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY worker.py ./
+COPY backend/jwt/common_secrets.txt ./common_secrets.txt
 ENV BACKEND_URL=http://backend:8000
 CMD ["uvicorn", "worker:app", "--host", "0.0.0.0", "--port", "8000"]

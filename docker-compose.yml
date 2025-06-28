@@ -23,8 +23,8 @@ services:
 
   jwttool-worker:
     build:
-      context: ./worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: worker/Dockerfile
     volumes:
       - ./worker:/app
     networks:

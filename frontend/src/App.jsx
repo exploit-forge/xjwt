@@ -11,11 +11,10 @@ function TextArea({ value, onChange }) {
   )
 }
 
-function JWTEditor() {
+function JWTEditor({ token, setToken }) {
   const [header, setHeader] = useState('{\n  "alg": "HS256",\n  "typ": "JWT"\n}')
   const [payload, setPayload] = useState('{\n  "sub": "1234567890",\n  "name": "John Doe"\n}')
   const [signature, setSignature] = useState('')
-  const [token, setToken] = useState('')
   const [algorithm, setAlgorithm] = useState('HS256')
 
   const encode = () => {
@@ -112,18 +111,36 @@ function JWTEditor() {
   )
 }
 
-function CrackJWT() {
+function CrackJWT({ token }) {
   const [_file, setFile] = useState(null)
   const [running, setRunning] = useState(false)
   const [logs, setLogs] = useState('')
 
+  const [source, setSource] = useState(null)
+  const [secret, setSecret] = useState(null)
+
   const start = () => {
     setRunning(true)
-    setLogs('Starting crack...\n')
-    // TODO: integrate backend call
+    setLogs('')
+    const es = new EventSource(`/crack?token=${encodeURIComponent(token)}`)
+    setSource(es)
+    es.onmessage = (e) => {
+      if (e.data.startsWith('RESULT ')) {
+        const data = JSON.parse(e.data.replace('RESULT ', ''))
+        setSecret(data)
+      } else if (e.data !== 'DONE') {
+        setLogs((prev) => prev + e.data + '\n')
+      }
+    }
+    es.onerror = () => {
+      es.close()
+      setRunning(false)
+    }
   }
 
   const stop = () => {
+    if (source) source.close()
+    setSource(null)
     setRunning(false)
     setLogs((prev) => prev + 'Stopped.\n')
   }
@@ -153,12 +170,19 @@ function CrackJWT() {
         readOnly
         className="w-full p-2 border rounded h-32 font-mono"
       />
+      {secret && (
+        <div className="mt-2 p-2 border rounded bg-gray-100 dark:bg-gray-700">
+          <div>Secret: {secret.secret}</div>
+          <div>Hash: {secret.hash}</div>
+        </div>
+      )}
     </div>
   )
 }
 
 function App() {
   const [theme, setTheme] = useState('light')
+  const [token, setToken] = useState('')
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
@@ -174,8 +198,8 @@ function App() {
           {theme === 'light' ? 'Dark' : 'Light'} Mode
         </button>
       </header>
-      <JWTEditor />
-      <CrackJWT />
+      <JWTEditor token={token} setToken={setToken} />
+      <CrackJWT token={token} />
     </div>
   )
 }
