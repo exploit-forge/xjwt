@@ -22,6 +22,7 @@ async def crack(req: CrackRequest):
     cmd = [
         "python",
         JWT_TOOL_PATH,
+        # "-b",
         "-C",
         "-d",
         wordlist,
@@ -34,21 +35,30 @@ async def crack(req: CrackRequest):
     )
     secret = None
     expect_next = False
+    ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
     async with httpx.AsyncClient() as client:
         async for line_bytes in process.stdout:
             line = line_bytes.decode()
-            await client.post(f"{BACKEND_URL}/worker/results", json={"line": line})
-            text = line.strip()
+            clean_line = ansi_escape.sub('', line).strip()
+
+            # Filter out unwanted lines
+            if clean_line in ("", "/root/.jwt_tool/jwtconf.ini"):
+                continue
+
+            await client.post(f"{BACKEND_URL}/worker/results", json={"line": clean_line})
+            text = clean_line
             if expect_next and text:
                 secret = text
                 expect_next = False
             if "CORRECT key" in text:
-                m = re.search(r"CORRECT key(?: found:)?\s*(.*)", text)
-                if m and m.group(1):
+                m = re.search(r"\[\+\]\s*(.+?)\s+is the CORRECT key!", text)
+                if m:
                     secret = m.group(1).strip()
-                else:
-                    expect_next = True
             if secret:
+                # await client.post(
+                #     f"{BACKEND_URL}/worker/results",
+                #     json={"line": f"Token successfully cracked, here is the correct key: {secret}"},
+                # )
                 process.kill()
                 await process.wait()
                 break
@@ -61,5 +71,6 @@ async def crack(req: CrackRequest):
         result.update({
             "secret": secret,
             "hash": hashlib.sha256(secret.encode()).hexdigest(),
+            "message": f"JWT Key cracked: {secret}"
         })
     return result
