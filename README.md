@@ -66,6 +66,17 @@ docker compose up
 
 The services will start on a shared network and can be accessed via the defined ports.
 
+### Configuration
+
+The frontend expects a `VITE_BACKEND_URL` environment variable during its build.
+Docker Compose passes this automatically so the UI can reach the API service.
+When building manually, set it to the base URL of the backend, e.g.
+
+```bash
+export VITE_BACKEND_URL=http://localhost:8000
+npm run build
+```
+
 ### Building without Docker
 
 ```

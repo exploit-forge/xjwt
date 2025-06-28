@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+
 function TextArea({ value, onChange }) {
   return (
     <textarea
@@ -122,7 +124,7 @@ function CrackJWT({ token }) {
   const start = () => {
     setRunning(true)
     setLogs('')
-    const es = new EventSource(`/crack?token=${encodeURIComponent(token)}`)
+    const es = new EventSource(`${API_BASE}/crack?token=${encodeURIComponent(token)}`)
     setSource(es)
     es.onmessage = (e) => {
       if (e.data.startsWith('RESULT ')) {
