@@ -48,7 +48,14 @@ async def crack(req: CrackRequest):
                     secret = m.group(1).strip()
                 else:
                     expect_next = True
-    await process.wait()
+            if secret:
+                process.kill()
+                await process.wait()
+                break
+        else:
+            await process.wait()
+    # await process.wait()
+
     result = {"status": "completed"}
     if secret:
         result.update({
