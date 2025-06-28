@@ -63,6 +63,13 @@ function JWTEditor({ token, setToken }) {
     }
   }
 
+  const [parts, setParts] = useState(['', '', ''])
+
+  useEffect(() => {
+    const split = token.split('.')
+    setParts([split[0] || '', split[1] || '', split[2] || ''])
+  }, [token])
+
   return (
     <div className="space-y-4">
       <input
@@ -70,8 +77,15 @@ function JWTEditor({ token, setToken }) {
         value={token}
         onChange={(e) => setToken(e.target.value)}
         placeholder="JWT token"
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded font-mono"
       />
+      <div className="font-mono break-all text-sm">
+        <span className="text-red-500">{parts[0]}</span>
+        {parts[0] && <span className="text-gray-500">.</span>}
+        <span className="text-green-600">{parts[1]}</span>
+        {parts[1] && <span className="text-gray-500">.</span>}
+        <span className="text-blue-500">{parts[2]}</span>
+      </div>
       <div className="flex flex-wrap gap-2">
         <button onClick={decode} className="px-3 py-1 bg-blue-500 text-white rounded">
           Decode
@@ -173,9 +187,8 @@ function CrackJWT({ token }) {
         className="w-full p-2 border rounded h-32 font-mono"
       />
       {secret && (
-        <div className="mt-2 p-2 border rounded bg-gray-100 dark:bg-gray-700">
-          <div>Secret: {secret.secret}</div>
-          <div>Hash: {secret.hash}</div>
+        <div className="mt-2 p-2 border rounded bg-green-600 text-white">
+          {secret.message || `JWT Key successfully cracked: ${secret.secret}`}
         </div>
       )}
     </div>
@@ -183,7 +196,7 @@ function CrackJWT({ token }) {
 }
 
 function App() {
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState('dark')
   const [token, setToken] = useState('')
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')

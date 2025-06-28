@@ -71,6 +71,6 @@ async def crack(req: CrackRequest):
         result.update({
             "secret": secret,
             "hash": hashlib.sha256(secret.encode()).hexdigest(),
-            "message": f"JWT Key cracked: {secret}"
+            "message": f"JWT Key successfully cracked: {secret}"
         })
     return result
