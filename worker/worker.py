@@ -59,12 +59,14 @@ async def crack(req: CrackRequest):
                 #     f"{BACKEND_URL}/worker/results",
                 #     json={"line": f"Token successfully cracked, here is the correct key: {secret}"},
                 # )
-                process.kill()
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
                 await process.wait()
                 break
         else:
             await process.wait()
-    # await process.wait()
 
     result = {"status": "completed"}
     if secret:
