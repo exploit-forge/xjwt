@@ -1,4 +1,3 @@
-jwttool
 fastapi
 uvicorn[standard]
 httpx
