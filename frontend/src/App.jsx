@@ -6,7 +6,7 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
 function TextArea({ value, onChange }) {
   return (
     <textarea
-      className="w-full p-2 border rounded font-mono"
+      className="textarea textarea-bordered w-full font-mono min-h-[8rem]"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -71,56 +71,58 @@ function JWTEditor({ token, setToken }) {
   }, [token])
 
   return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        value={token}
-        onChange={(e) => setToken(e.target.value)}
-        placeholder="JWT token"
-        className="w-full p-2 border rounded font-mono"
-      />
-      <div className="font-mono break-all text-sm">
-        <span className="text-red-500">{parts[0]}</span>
-        {parts[0] && <span className="text-gray-500">.</span>}
-        <span className="text-green-600">{parts[1]}</span>
-        {parts[1] && <span className="text-gray-500">.</span>}
-        <span className="text-blue-500">{parts[2]}</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button onClick={decode} className="px-3 py-1 bg-blue-500 text-white rounded">
-          Decode
-        </button>
-        <button onClick={encode} className="px-3 py-1 bg-green-500 text-white rounded">
-          Encode
-        </button>
-        <select
-          value={algorithm}
-          onChange={(e) => setAlgorithm(e.target.value)}
-          className="p-1 border rounded"
-        >
-          <option value="HS256">HS256</option>
-          <option value="RS256">RS256</option>
-          <option value="none">none</option>
-        </select>
-        <button onClick={copyToken} className="px-3 py-1 bg-gray-500 text-white rounded">
-          Copy Token
-        </button>
-        <button onClick={copyJSON} className="px-3 py-1 bg-gray-500 text-white rounded">
-          Copy JSON
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <div className="font-bold mb-1">Header</div>
-          <TextArea value={header} onChange={setHeader} />
+    <div className="card bg-base-200 shadow">
+      <div className="card-body space-y-4">
+        <input
+          type="text"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="JWT token"
+          className="input input-bordered w-full font-mono"
+        />
+        <div className="font-mono break-all text-sm">
+          <span className="text-error">{parts[0]}</span>
+          {parts[0] && <span className="text-gray-500">.</span>}
+          <span className="text-success">{parts[1]}</span>
+          {parts[1] && <span className="text-gray-500">.</span>}
+          <span className="text-primary">{parts[2]}</span>
         </div>
-        <div>
-          <div className="font-bold mb-1">Payload</div>
-          <TextArea value={payload} onChange={setPayload} />
+        <div className="flex flex-wrap gap-2">
+          <button onClick={decode} className="btn btn-primary">
+            Decode
+          </button>
+          <button onClick={encode} className="btn btn-secondary">
+            Encode
+          </button>
+          <select
+            value={algorithm}
+            onChange={(e) => setAlgorithm(e.target.value)}
+            className="select select-bordered"
+          >
+            <option value="HS256">HS256</option>
+            <option value="RS256">RS256</option>
+            <option value="none">none</option>
+          </select>
+          <button onClick={copyToken} className="btn">
+            Copy Token
+          </button>
+          <button onClick={copyJSON} className="btn">
+            Copy JSON
+          </button>
         </div>
-        <div>
-          <div className="font-bold mb-1">Signature</div>
-          <TextArea value={signature} onChange={setSignature} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <div className="font-semibold mb-1">Header</div>
+            <TextArea value={header} onChange={setHeader} />
+          </div>
+          <div>
+            <div className="font-semibold mb-1">Payload</div>
+            <TextArea value={payload} onChange={setPayload} />
+          </div>
+          <div>
+            <div className="font-semibold mb-1">Signature</div>
+            <TextArea value={signature} onChange={setSignature} />
+          </div>
         </div>
       </div>
     </div>
@@ -162,59 +164,65 @@ function CrackJWT({ token }) {
   }
 
   return (
-    <div className="mt-8 space-y-2">
-      <h2 className="text-lg font-bold">Crack JWT</h2>
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <div className="space-x-2">
-        <button
-          onClick={start}
-          disabled={running}
-          className="px-3 py-1 bg-red-500 text-white rounded"
-        >
-          Start
-        </button>
-        <button
-          onClick={stop}
-          disabled={!running}
-          className="px-3 py-1 bg-gray-500 text-white rounded"
-        >
-          Stop
-        </button>
-      </div>
-      <textarea
-        value={logs}
-        readOnly
-        className="w-full p-2 border rounded h-32 font-mono"
-      />
-      {secret && (
-        <div className="mt-2 p-2 border rounded bg-green-600 text-white">
-          {secret.message || `JWT Key successfully cracked: ${secret.secret}`}
+    <div className="card bg-base-200 shadow mt-8">
+      <div className="card-body space-y-4">
+        <h2 className="card-title">Crack JWT</h2>
+        <input type="file" className="file-input file-input-bordered" onChange={(e) => setFile(e.target.files[0])} />
+        <div className="space-x-2">
+          <button
+            onClick={start}
+            disabled={running}
+            className="btn btn-error"
+          >
+            Start
+          </button>
+          <button
+            onClick={stop}
+            disabled={!running}
+            className="btn"
+          >
+            Stop
+          </button>
         </div>
-      )}
+        <textarea
+          value={logs}
+          readOnly
+          className="textarea textarea-bordered w-full h-32 font-mono"
+        />
+        {secret && (
+          <div className="alert alert-success">
+            {secret.message || `JWT Key successfully cracked: ${secret.secret}`}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
 function App() {
-  const [theme, setTheme] = useState('dark')
+  const [theme, setTheme] = useState('light')
   const [token, setToken] = useState('')
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
   return (
-    <div className="min-h-screen p-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-      <header className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">JWT Pentest Studio</h1>
+    <div className="min-h-screen bg-base-100">
+      <header className="navbar bg-base-200 shadow mb-4">
+        <div className="flex-1">
+          <span className="text-xl font-bold">JWT Pentest Studio</span>
+        </div>
         <button
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          className="bg-gray-200 dark:bg-gray-700 p-2 rounded"
+          className="btn btn-ghost"
         >
           {theme === 'light' ? 'Dark' : 'Light'} Mode
         </button>
       </header>
-      <JWTEditor token={token} setToken={setToken} />
-      <CrackJWT token={token} />
+      <div className="space-y-8 p-4">
+        <JWTEditor token={token} setToken={setToken} />
+        <CrackJWT token={token} />
+      </div>
     </div>
   )
 }
