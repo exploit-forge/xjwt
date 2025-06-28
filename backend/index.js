@@ -70,7 +70,7 @@ app.post('/verify', [
 // Start cracking job using jwttool-worker service
 app.post('/crack', [
   body('token').isString().notEmpty(),
-  body('wordlist').optional().isString(),
+  body('wordlist').optional({ nullable: true }).isString(),
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });

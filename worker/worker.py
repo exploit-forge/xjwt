@@ -11,18 +11,14 @@ app = FastAPI()
 
 class CrackRequest(BaseModel):
     token: str
-    wordlist: str
+    wordlist: str | None = None
 
 @app.post("/crack")
 async def crack(req: CrackRequest):
-    cmd = [
-        "python",
-        JWT_TOOL_PATH,
-        "-C",
-        "-d",
-        req.wordlist,
-        req.token,
-    ]
+    cmd = ["python", JWT_TOOL_PATH, "-C"]
+    if req.wordlist:
+        cmd += ["-d", req.wordlist]
+    cmd.append(req.token)
     process = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
