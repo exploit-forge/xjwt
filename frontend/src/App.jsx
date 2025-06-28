@@ -72,56 +72,60 @@ function JWTEditor({ token, setToken }) {
 
   return (
     <div className="card bg-base-200 shadow">
-      <div className="card-body space-y-4">
-        <input
-          type="text"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="JWT token"
-          className="input input-bordered w-full font-mono"
-        />
-        <div className="font-mono break-all text-sm">
-          <span className="text-error">{parts[0]}</span>
-          {parts[0] && <span className="text-gray-500">.</span>}
-          <span className="text-success">{parts[1]}</span>
-          {parts[1] && <span className="text-gray-500">.</span>}
-          <span className="text-primary">{parts[2]}</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={decode} className="btn btn-primary">
-            Decode
-          </button>
-          <button onClick={encode} className="btn btn-secondary">
-            Encode
-          </button>
-          <select
-            value={algorithm}
-            onChange={(e) => setAlgorithm(e.target.value)}
-            className="select select-bordered"
-          >
-            <option value="HS256">HS256</option>
-            <option value="RS256">RS256</option>
-            <option value="none">none</option>
-          </select>
-          <button onClick={copyToken} className="btn">
-            Copy Token
-          </button>
-          <button onClick={copyJSON} className="btn">
-            Copy JSON
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <div className="font-semibold mb-1">Header</div>
-            <TextArea value={header} onChange={setHeader} />
+      <div className="card-body">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="JWT token"
+              className="input input-bordered w-full font-mono"
+            />
+            <div className="font-mono break-all text-sm">
+              <span className="text-error">{parts[0]}</span>
+              {parts[0] && <span className="text-gray-500">.</span>}
+              <span className="text-success">{parts[1]}</span>
+              {parts[1] && <span className="text-gray-500">.</span>}
+              <span className="text-primary">{parts[2]}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={decode} className="btn btn-primary">
+                Decode
+              </button>
+              <button onClick={encode} className="btn btn-secondary">
+                Encode
+              </button>
+              <select
+                value={algorithm}
+                onChange={(e) => setAlgorithm(e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="HS256">HS256</option>
+                <option value="RS256">RS256</option>
+                <option value="none">none</option>
+              </select>
+              <button onClick={copyToken} className="btn">
+                Copy Token
+              </button>
+              <button onClick={copyJSON} className="btn">
+                Copy JSON
+              </button>
+            </div>
           </div>
-          <div>
-            <div className="font-semibold mb-1">Payload</div>
-            <TextArea value={payload} onChange={setPayload} />
-          </div>
-          <div>
-            <div className="font-semibold mb-1">Signature</div>
-            <TextArea value={signature} onChange={setSignature} />
+          <div className="space-y-4">
+            <div>
+              <div className="font-semibold mb-1">Header</div>
+              <TextArea value={header} onChange={setHeader} />
+            </div>
+            <div>
+              <div className="font-semibold mb-1">Payload</div>
+              <TextArea value={payload} onChange={setPayload} />
+            </div>
+            <div>
+              <div className="font-semibold mb-1">Signature</div>
+              <TextArea value={signature} onChange={setSignature} />
+            </div>
           </div>
         </div>
       </div>
