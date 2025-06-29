@@ -9,6 +9,7 @@ function CrackSection({ token }) {
   const [crackedSecret, setCrackedSecret] = useState(null)
   const [progress, setProgress] = useState('')
   const [eventSource, setEventSource] = useState(null)
+  const [usingCustomWordlist, setUsingCustomWordlist] = useState(false)
   const logsRef = useRef(null)
 
   // Auto-scroll logs to bottom
@@ -18,7 +19,7 @@ function CrackSection({ token }) {
     }
   }, [logs])
 
-  const startCracking = () => {
+  const startCracking = async () => {
     if (!token) {
       alert('Please provide a JWT token to crack')
       return
@@ -27,50 +28,113 @@ function CrackSection({ token }) {
     setIsRunning(true)
     setLogs('')
     setCrackedSecret(null)
+    setUsingCustomWordlist(false)
     setProgress('Initializing attack...')
 
-    const url = `${API_BASE}/crack?token=${encodeURIComponent(token)}`
-    const es = new EventSource(url)
-    setEventSource(es)
+    try {
+      let wordlistContent = null
+      
+      // Read wordlist file if provided
+      if (wordlistFile) {
+        setProgress('📖 Reading wordlist file...')
+        wordlistContent = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = (e) => reject(new Error('Failed to read wordlist file'))
+          reader.readAsText(wordlistFile)
+        })
+      }
 
-    es.onmessage = (event) => {
-      const data = event.data
+      // Prepare request data
+      const requestData = { token }
+      if (wordlistContent) {
+        requestData.wordlist = wordlistContent
+      }
 
-      if (data.startsWith('RESULT ')) {
-        const result = JSON.parse(data.replace('RESULT ', ''))
-        setCrackedSecret(result)
-        setProgress('🎉 Secret found!')
-        setIsRunning(false)
-        es.close()
-      } else if (data === 'DONE') {
-        if (!crackedSecret) {
-          setProgress('❌ Attack completed - no secret found')
-        }
-        setIsRunning(false)
-        es.close()
-      } else if (data.startsWith('ERROR ')) {
-        setLogs(prev => prev + `❌ ${data.replace('ERROR ', '')}\n`)
-        setProgress('❌ Error occurred')
-        setIsRunning(false)
-        es.close()
-      } else {
-        setLogs(prev => prev + data + '\n')
-        
-        // Update progress based on log content
-        if (data.includes('Testing')) {
-          setProgress('🔍 Testing passwords...')
-        } else if (data.includes('Loaded')) {
-          setProgress('📖 Wordlist loaded')
-        } else if (data.includes('Starting')) {
-          setProgress('🚀 Attack started')
+      setProgress('🚀 Starting attack...')
+
+      // Use POST for both custom and default wordlists
+      const response = await fetch(`${API_BASE}/crack`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Handle SSE response from POST request
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6) // Remove 'data: ' prefix
+
+            if (data.startsWith('RESULT ')) {
+              const result = JSON.parse(data.replace('RESULT ', ''))
+              setCrackedSecret(result)
+              if (usingCustomWordlist) {
+                setProgress('🎉 Secret found with custom wordlist!')
+              } else {
+                setProgress('🎉 Secret found!')
+              }
+              setIsRunning(false)
+              return
+            } else if (data === 'DONE') {
+              if (!crackedSecret) {
+                setProgress('❌ Attack completed - no secret found')
+              }
+              setIsRunning(false)
+              return
+            } else if (data.startsWith('ERROR ')) {
+              setLogs(prev => prev + `❌ ${data.replace('ERROR ', '')}\n`)
+              setProgress('❌ Error occurred')
+              setIsRunning(false)
+              return
+            } else if (data.trim()) {
+              setLogs(prev => prev + data + '\n')
+              
+              // Update progress based on log content
+              if (data.includes('Using custom wordlist with')) {
+                const match = data.match(/Using custom wordlist with (\d+) entries/)
+                if (match) {
+                  setUsingCustomWordlist(true)
+                  setProgress(`📁 Using custom wordlist (${match[1]} entries)`)
+                }
+              } else if (data.includes('Using default wordlist')) {
+                setUsingCustomWordlist(false)
+                setProgress('📖 Using default wordlist (100+ secrets)')
+              } else if (data.includes('Testing')) {
+                if (usingCustomWordlist) {
+                  setProgress('🎯 Testing passwords with custom wordlist...')
+                } else {
+                  setProgress('🔍 Testing passwords...')
+                }
+              } else if (data.includes('Loaded')) {
+                setProgress('📖 Wordlist loaded')
+              } else if (data.includes('Starting')) {
+                setProgress('🚀 Attack started')
+              }
+            }
+          }
         }
       }
-    }
 
-    es.onerror = () => {
-      setProgress('❌ Connection error')
+    } catch (error) {
+      setProgress('❌ Error occurred')
+      setLogs(prev => prev + `❌ Error: ${error.message}\n`)
       setIsRunning(false)
-      es.close()
     }
   }
 
@@ -92,6 +156,27 @@ function CrackSection({ token }) {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
+    
+    if (file) {
+      // Check file size (warn if > 10MB, reject if > 50MB)
+      const maxSize = 50 * 1024 * 1024 // 50MB
+      const warnSize = 10 * 1024 * 1024 // 10MB
+      
+      if (file.size > maxSize) {
+        alert(`File too large! Maximum size is 50MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.`)
+        event.target.value = '' // Clear the input
+        return
+      }
+      
+      if (file.size > warnSize) {
+        const proceed = confirm(`Large wordlist detected (${(file.size / 1024 / 1024).toFixed(1)}MB). This may take a long time to process. Continue?`)
+        if (!proceed) {
+          event.target.value = '' // Clear the input
+          return
+        }
+      }
+    }
+    
     setWordlistFile(file)
   }
 
