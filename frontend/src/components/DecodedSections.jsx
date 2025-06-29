@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api'
 
 function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = true }) {
   const [activeTab, setActiveTab] = useState('json')

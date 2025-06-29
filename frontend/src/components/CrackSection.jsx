@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api'
 
 function CrackSection({ token }) {
   const [wordlistFile, setWordlistFile] = useState(null)

@@ -6,8 +6,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
+        # For development
         # - VITE_BACKEND_URL=http://localhost:8000
-        - VITE_BACKEND_URL=http://46.62.134.156/api:8000
+        # For production - use relative URLs (leave empty)
+        - VITE_BACKEND_URL=
     ports:
       - "3000:80"
     networks:
