@@ -28,7 +28,7 @@ function Header({ theme, setTheme }) {
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Decoder</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Pentest Studio</h1>
             </div>
           </div>
 
