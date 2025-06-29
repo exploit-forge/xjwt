@@ -11,12 +11,24 @@ function Header({ theme, setTheme }) {
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
               {/* Exploit-forge style logo */}
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-lg">EF</span>
+              <div className="w-10 h-10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className="w-10 h-10 drop-shadow-sm">
+                  <defs>
+                    <linearGradient id="headerGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:"#4D8EFF"}} />
+                      <stop offset="100%" style={{stopColor:"#9F4DFF"}} />
+                    </linearGradient>
+                  </defs>
+                  <path d="M32 2 L54 12 V32 C54 48 40 58 32 62 C24 58 10 48 10 32 V12 Z"
+                        fill="url(#headerGrad1)" stroke="#000" strokeWidth="2" />
+                  <path d="M22 24 L18 32 L22 40" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M42 24 L46 32 L42 40" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="30" y1="22" x2="34" y2="42" stroke="white" strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Debugger</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Decoder</h1>
             </div>
           </div>
 
@@ -27,7 +39,7 @@ function Header({ theme, setTheme }) {
                 href="#" 
                 className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
               >
-                Debugger
+                Decoder
               </a>
               <a 
                 href="#" 
