@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Header, TokenInput, DecodedSections, CrackSection } from './components'
+import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification } from './components'
 import './App.css'
 
 function App() {
@@ -23,6 +23,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
       <Header theme={theme} setTheme={setTheme} />
+      <PromoNotification />
       
       {/* Secondary Navigation Tabs */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">

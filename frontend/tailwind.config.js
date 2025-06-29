@@ -43,8 +43,13 @@ export default {
         'slide-in-right': 'slideInRight 0.3s ease-out',
         'pulse-dot': 'pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'spin-slow': 'spin 2s linear infinite',
+        'shrink': 'shrink 10s linear forwards',
       },
       keyframes: {
+        shrink: {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
         fadeIn: {
           'from': { opacity: '0' },
           'to': { opacity: '1' },
