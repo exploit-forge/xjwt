@@ -52,22 +52,31 @@ const LibrariesPage = () => {
       logo: '🔍',
       tools: [
         {
-          name: 'JWT-Hack',
-          description: 'Comprehensive testing tool for common JWT attacks including weak key detection and various JWT vulnerabilities.',
-          install: 'git clone https://github.com/Bo0oM/jwt-hack.git',
-          features: ['Common JWT attacks', 'Weak key guessing', 'Algorithm confusion', 'Signature bypass'],
-          github: 'https://github.com/Bo0oM/jwt-hack',
-          language: 'Python',
-          type: 'Security testing'
+          name: 'JWT Editor',
+          description: 'Burp Suite extension that allows you to decode, edit, and re-sign JSON Web Tokens with ease.',
+          install: 'Install via Burp Suite BApp Store',
+          features: ['Decode JWTs', 'Edit token content', 'Re-sign tokens', 'Key management'],
+          github: 'https://portswigger.net/bappstore/229c75c861b14f429de3b47439f9969a',
+          language: 'Java',
+          type: 'Burp Extension'
         },
         {
-          name: 'JAWS (JWT Analysis and Weak-key Scanner)',
-          description: 'Automated scanner that detects weak keys and common JWT misconfigurations in applications.',
-          install: 'git clone https://github.com/ksanch78/jaws.git',
-          features: ['Automated weak key detection', 'Misconfiguration checks', 'Batch scanning', 'Report generation'],
-          github: 'https://github.com/ksanch78/jaws',
-          language: 'Python',
-          type: 'Automated scanning'
+          name: 'Hackvertor',
+          description: 'Powerful Burp Suite extension for transforming and fuzzing JWTs with various encoding and decoding capabilities.',
+          install: 'Install via Burp Suite BApp Store',
+          features: ['Transform JWTs', 'Fuzzing capabilities', 'Multiple encodings', 'Custom transformations'],
+          github: 'https://portswigger.net/bappstore/6dfeb5e63aa94819be5b655e5f47a6c5',
+          language: 'Java',
+          type: 'Burp Extension'
+        },
+        {
+          name: 'JWT4B',
+          description: 'Comprehensive Burp Suite extension for JWT security testing including brute-force attacks and algorithm tampering.',
+          install: 'git clone https://github.com/PortSwigger/jwt4b.git',
+          features: ['Brute-force JWT secrets', 'Algorithm tampering', 'Signature verification bypass', 'Custom payloads'],
+          github: 'https://github.com/PortSwigger/jwt4b',
+          language: 'Java',
+          type: 'Burp Extension'
         }
       ]
     }
