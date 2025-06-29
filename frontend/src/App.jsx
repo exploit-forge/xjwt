@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification } from './components'
+import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification, LibrariesPage } from './components'
 import './App.css'
 
 function App() {
   const [theme, setTheme] = useState('dark') // Default to dark mode
   const [token, setToken] = useState('')
-  const [currentView, setCurrentView] = useState('decoder') // 'decoder' or 'crack'
+  const [currentView, setCurrentView] = useState('decoder') // 'decoder', 'crack', or 'libraries'
 
   useEffect(() => {
     // Apply theme to document
@@ -22,7 +22,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
-      <Header theme={theme} setTheme={setTheme} />
+      <Header theme={theme} setTheme={setTheme} currentView={currentView} setCurrentView={setCurrentView} />
       <PromoNotification />
       
       {/* Secondary Navigation Tabs */}
@@ -53,8 +53,12 @@ function App() {
         </div>
       </div>
 
-      <main className="flex-1 max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {currentView === 'decoder' ? (
+      <main className="flex-1 w-full">
+        {currentView === 'libraries' ? (
+          <LibrariesPage />
+        ) : (
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {currentView === 'decoder' ? (
           <>
             {/* JWT.io style intro */}
             <div className="text-center mb-8">
@@ -132,14 +136,25 @@ function App() {
             {/* Crack section */}
             <CrackSection token={token} />
           </>
+            )}
+          </div>
         )}
       </main>
 
       {/* Footer */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-            Developed by Exploit-forge LTD.
+          <div className="text-center text-sm">
+            Developed by{' '}
+            <a 
+              href="https://exploit-forge.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium underline decoration-2 underline-offset-2 transition-colors"
+            >
+              Exploit-forge LTD
+            </a>
+            .
           </div>
         </div>
       </footer>

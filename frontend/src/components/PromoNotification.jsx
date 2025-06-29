@@ -56,7 +56,7 @@ const PromoNotification = () => {
         <div className="bg-orange-500/10 px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-orange-200 rounded-full animate-pulse shadow-lg"></div>
-            <span className="text-white font-bold text-sm drop-shadow-sm">Exploit-Forge</span>
+            <span className="text-white font-bold text-sm drop-shadow-sm">Exploit-Forge LTD</span>
           </div>
           <button
             onClick={handleClose}

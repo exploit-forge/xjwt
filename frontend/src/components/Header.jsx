@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Header({ theme, setTheme }) {
+function Header({ theme, setTheme, currentView, setCurrentView }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
@@ -35,24 +35,32 @@ function Header({ theme, setTheme }) {
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center space-x-1">
             <nav className="flex space-x-1">
-              <a 
-                href="#" 
-                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
+              <button 
+                onClick={() => setCurrentView('decoder')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  currentView === 'decoder'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
                 Decoder
-              </a>
+              </button>
               <a 
                 href="#" 
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Introduction
               </a>
-              <a 
-                href="#" 
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              <button 
+                onClick={() => setCurrentView('libraries')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  currentView === 'libraries'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
-                Libraries
-              </a>
+                Tools
+              </button>
               <a 
                 href="https://github.com/exploit-forge" 
                 target="_blank"
@@ -101,24 +109,32 @@ function Header({ theme, setTheme }) {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <nav className="flex flex-col space-y-2">
-              <a 
-                href="#" 
-                className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
+              <button 
+                onClick={() => {setCurrentView('decoder'); setIsMenuOpen(false);}}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors text-left w-full ${
+                  currentView === 'decoder'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
-                Debugger
-              </a>
+                Decoder
+              </button>
               <a 
                 href="#" 
                 className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 Introduction
               </a>
-              <a 
-                href="#" 
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              <button 
+                onClick={() => {setCurrentView('libraries'); setIsMenuOpen(false);}}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors text-left w-full ${
+                  currentView === 'libraries'
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
               >
                 Libraries
-              </a>
+              </button>
               <a 
                 href="https://github.com/exploit-forge" 
                 target="_blank"
