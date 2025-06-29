@@ -48,7 +48,7 @@ const PromoNotification = () => {
   if (!isVisible) return null;
 
   return (
-    <div className={`fixed top-20 right-4 z-50 max-w-sm transition-all duration-300 ease-out ${
+    <div className={`fixed bottom-4 right-4 z-50 max-w-sm transition-all duration-300 ease-out ${
       isAnimating ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
     }`}>
       <div className="bg-gradient-to-br from-orange-600 to-red-700 rounded-lg shadow-2xl border border-orange-400/30 overflow-hidden">
