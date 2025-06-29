@@ -158,6 +158,17 @@ function CrackSection({ token }) {
     const file = event.target.files[0]
     
     if (file) {
+      // Check file format
+      const allowedExtensions = ['.txt', '.list', '.dic']
+      const fileName = file.name.toLowerCase()
+      const isValidFormat = allowedExtensions.some(ext => fileName.endsWith(ext))
+      
+      if (!isValidFormat) {
+        alert('Invalid Format! Please upload only .txt, .list, or .dic files.')
+        event.target.value = '' // Clear the input
+        return
+      }
+      
       // Check file size (warn if > 10MB, reject if > 50MB)
       const maxSize = 50 * 1024 * 1024 // 50MB
       const warnSize = 10 * 1024 * 1024 // 10MB
