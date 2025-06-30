@@ -28,7 +28,7 @@ function Header({ theme, setTheme, currentView, setCurrentView }) {
               </div>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Pentest Studio</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">JWT Security Checker</h1>
             </div>
           </div>
 
@@ -45,12 +45,6 @@ function Header({ theme, setTheme, currentView, setCurrentView }) {
               >
                 Decoder
               </button>
-              <a 
-                href="#" 
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Introduction
-              </a>
               <button 
                 onClick={() => setCurrentView('libraries')}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -119,12 +113,6 @@ function Header({ theme, setTheme, currentView, setCurrentView }) {
               >
                 Decoder
               </button>
-              <a 
-                href="#" 
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Introduction
-              </a>
               <button 
                 onClick={() => {setCurrentView('libraries'); setIsMenuOpen(false);}}
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors text-left w-full ${
@@ -133,7 +121,7 @@ function Header({ theme, setTheme, currentView, setCurrentView }) {
                     : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                Libraries
+                Tools
               </button>
               <a 
                 href="https://github.com/exploit-forge" 
