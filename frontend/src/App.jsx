@@ -129,6 +129,11 @@ function App() {
                   <p>
                     Use strong, randomly generated secrets (at least 256 bits) for production systems.
                   </p>
+                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-green-700 dark:text-green-300 text-sm font-medium">
+                      🔒 Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

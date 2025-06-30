@@ -1,4 +1,0 @@
-termcolor
-cprint
-pycryptodomex
-requests
