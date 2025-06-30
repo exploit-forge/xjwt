@@ -84,7 +84,7 @@ const PromoNotification = () => {
                 Professional Penetration Testing
               </h4>
               <p className="text-gray-100 text-xs leading-relaxed mb-3 drop-shadow-sm">
-                Are you looking to conduct a Web, API or Mobile pentest for your organization at an affordable price? Contact Exploit-Forge
+              Looking to assess the security of your company's Web, API, or Mobile applications? Exploit-Forge offers industry-grade penetration testing services tailored to your business, all at a cost-effective rate.
               </p>
               <div className="flex space-x-2">
                 <button

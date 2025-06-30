@@ -223,7 +223,7 @@ const LibrariesPage = () => {
             </svg>
             <div>
               <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-                ⚠️ Ethical Use Only
+                Ethical Use Only
               </h3>
               <p className="text-red-700 dark:text-red-300 text-sm">
                 These tools are intended for authorized penetration testing, security research, and educational purposes only. 
