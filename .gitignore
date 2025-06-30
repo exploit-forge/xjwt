@@ -9,5 +9,3 @@ ENV/
 *.egg-info/
 # others
 .DS_Store
-.github/workflows
-deploy.yml
