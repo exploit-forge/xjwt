@@ -1,29 +1,54 @@
+name: Deploy JWT Security Checker
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy to Hetzner
 
+    environment:
+      name: production
+      url: https://xjwt.io
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up SSH
+    - name: Set up SSH agent
       uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Sync code to server
+    - name: Sync code to server with rsync
       run: |
-        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/jwt_pentest/
+        rsync -avz --delete \
+          -e "ssh -o StrictHostKeyChecking=no" \
+          ./ \
+          ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/root/jwt_pentest/
 
     - name: Deploy on Hetzner
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
           set -e
+
+          # move to project directory
           cd /root/jwt_pentest
+
+          # stop running containers
           docker-compose down
+
+          # rebuild and restart containers
           docker-compose up -d --build
+
+          # prune unused images
           docker image prune -f
+
+          # confirm status
           docker-compose ps
         EOF
 
@@ -31,4 +56,5 @@ jobs:
       run: |
         sleep 30
         curl -f https://xjwt.io || exit 1
-        curl -f https://xjwt.io/api/decode -X POST -H "Content-Type: application/json" -d '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}' || echo "API check failed"
+        curl -f https://xjwt.io/api/decode -X POST -H "Content-Type: application/json" \
+        -d '{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"}' || echo "API check failed"
