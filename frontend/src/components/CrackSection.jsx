@@ -114,7 +114,7 @@ function CrackSection({ token }) {
                 }
               } else if (data.includes('Using default wordlist')) {
                 setUsingCustomWordlist(false)
-                setProgress('📖 Using default wordlist (100+ secrets)')
+                setProgress('📖 Using default wordlist (100000+ secrets)')
               } else if (data.includes('Testing')) {
                 if (usingCustomWordlist) {
                   setProgress('🎯 Testing passwords with custom wordlist...')
@@ -247,7 +247,7 @@ function CrackSection({ token }) {
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Leave empty to use default wordlist with 100+ common secrets
+              Leave empty to use default wordlist with 100000+ common secrets
             </p>
           </div>
 

@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Hetzner
+    name: Deploy to Server
 
     environment:
       name: production
