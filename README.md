@@ -122,18 +122,6 @@ graph TD
 - ✅ Server-side processing with immediate deletion
 - ✅ No long-term retention of sensitive information
 
-### Rate Limiting (Planned)
-- Request frequency controls
-- IP-based restrictions
-- Resource usage monitoring
-- DDoS protection
-
-### Security Headers
-- CORS protection
-- Content Security Policy
-- XSS protection
-- Secure defaults
-
 ## 🧪 Development
 
 ### Local Development Setup
@@ -269,8 +257,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Website**: [https://exploit-forge.com](https://exploit-forge.com)
-- **Email**: support@exploit-forge.com
-- **Twitter**: [@exploitforge](https://twitter.com/exploitforge)
+- **Email**: security@exploit-forge.com
+- **Twitter**: [@exploitforge](https://twitter.com/exploitforgeltd)
 - **LinkedIn**: [Exploit-forge LTD](https://linkedin.com/company/exploit-forge)
 
 ---
