@@ -73,13 +73,23 @@ async def crack(req: CrackRequest):
 
                 await client.post(f"{BACKEND_URL}/worker/results", json={"line": clean_line})
                 text = clean_line
+                
+                # Handle case where secret is on the next line after "CORRECT key found:"
                 if expect_next and text:
                     secret = text
                     expect_next = False
+                
+                # Handle both jwt_tool output formats
                 if "CORRECT key" in text:
-                    m = re.search(r"\[\+\]\s*(.+?)\s+is the CORRECT key!", text)
-                    if m:
-                        secret = m.group(1).strip()
+                    # Format 1: "[+] your-256-bit-secret is the CORRECT key!"
+                    m1 = re.search(r"\[\+\]\s*(.+?)\s+is the CORRECT key!", text)
+                    if m1:
+                        secret = m1.group(1).strip()
+                    
+                    # Format 2: "[+] CORRECT key found:" (secret on next line)
+                    elif "CORRECT key found:" in text:
+                        expect_next = True
+                
                 if secret:
                     try:
                         process.kill()
