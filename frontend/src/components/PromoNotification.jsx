@@ -16,7 +16,7 @@ const PromoNotification = () => {
         setIsVisible(true);
         setIsAnimating(true);
         localStorage.setItem('exploitForgePromoLastShown', now.toString());
-      }, 10000); // Show after 10 seconds of page load
+      }, 60000); // Show after 60 seconds of page load
 
       return () => clearTimeout(timer);
     }
