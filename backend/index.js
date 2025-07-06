@@ -47,7 +47,10 @@ app.post('/encode', [
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   const { header, payload, secret } = req.body;
   try {
-    const token = jwt.sign(payload, secret || '', { header });
+    const token = jwt.sign(payload, secret || '', { 
+      header,
+      noTimestamp: true 
+    });
     res.json({ token });
   } catch (err) {
     res.status(400).json({ error: err.message });

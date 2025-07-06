@@ -258,7 +258,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Website**: [https://exploit-forge.com](https://exploit-forge.com)
 - **Email**: security@exploit-forge.com
-- **Twitter**: [@exploitforge](https://twitter.com/exploitforgeltd)
+- **Twitter**: [@ExploitforgeLTD](https://twitter.com/exploitforgeltd)
 - **LinkedIn**: [Exploit-forge LTD](https://linkedin.com/company/exploit-forge)
 
 ---
