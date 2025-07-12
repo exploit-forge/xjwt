@@ -618,20 +618,20 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
   }
 
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           JWT Security Scanner
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto px-2">
           Comprehensive security analysis of JWT tokens including algorithm validation, 
           claims verification, and sensitive data detection.
         </p>
       </div>
 
       {/* Scanner Input */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <ScannerInput 
           token={scanToken}
           onTokenChange={handleTokenChange}
@@ -642,18 +642,18 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
 
       {/* Results */}
       {scanResults && (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {scanResults.error ? (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
                 Scan Error
               </h3>
-              <p className="text-red-700 dark:text-red-300">{scanResults.error}</p>
+              <p className="text-red-700 dark:text-red-300 text-sm sm:text-base">{scanResults.error}</p>
             </div>
           ) : (
             <>
               {/* Gauges */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                 <SecurityGauge score={scanResults.securityScore} />
                 <RiskGauge score={scanResults.riskScore} />
               </div>
@@ -663,15 +663,15 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
 
               {/* Download Report Button */}
               {!scanResults.error && (
-                <div className="flex justify-center mt-8">
+                <div className="flex justify-center mt-6 sm:mt-8 px-4">
                   <button
                     onClick={generatePDFReport}
-                    className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 sm:py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm text-base min-h-[48px] touch-manipulation"
                   >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Download Scan Report
+                    <span className="whitespace-nowrap">Download Scan Report</span>
                   </button>
                 </div>
               )}
