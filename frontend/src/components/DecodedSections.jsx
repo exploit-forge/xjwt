@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api'
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api' // Only needed for verify/encode with HMAC
 
 function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = true }) {
   const [activeTab, setActiveTab] = useState('json')
@@ -137,7 +137,7 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
   )
 }
 
-function DecodedSections({ token }) {
+function DecodedSections({ token, setToken }) {
   const [header, setHeader] = useState(null)
   const [payload, setPayload] = useState(null)
   const [signature, setSignature] = useState('')
@@ -146,15 +146,54 @@ function DecodedSections({ token }) {
   const [isVerifying, setIsVerifying] = useState(false)
   const [verificationResult, setVerificationResult] = useState(null)
   const [encodedToken, setEncodedToken] = useState('')
+  const [isInternalUpdate, setIsInternalUpdate] = useState(false)
 
-  // Decode token whenever it changes
+  // Decode token whenever it changes (from external input only)
   useEffect(() => {
-    if (token) {
-      decodeToken()
-    } else {
-      resetFields()
+    if (!isInternalUpdate) {
+      if (token) {
+        decodeToken()
+      } else {
+        resetFields()
+      }
     }
+    setIsInternalUpdate(false) // Reset flag
   }, [token])
+
+  // Auto-encode when header or payload changes (from editing)
+  useEffect(() => {
+    if (header && payload && setToken) {
+      autoEncodeToken()
+    }
+  }, [header, payload, algorithm])
+
+  const autoEncodeToken = () => {
+    try {
+      const headerObj = { ...header, alg: algorithm }
+
+      // Client-side Base64URL encoding
+      const base64UrlEncode = (obj) => {
+        return btoa(JSON.stringify(obj))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '')
+      }
+
+      const encodedHeader = base64UrlEncode(headerObj)
+      const encodedPayload = base64UrlEncode(payload)
+
+      // For real-time editing, create unsigned token structure
+      // User can sign it later if needed
+      const newToken = `${encodedHeader}.${encodedPayload}.${signature || ''}`
+      
+      // Mark as internal update to prevent decode loop
+      setIsInternalUpdate(true)
+      // Update the main token state to reflect changes in real-time
+      setToken(newToken)
+    } catch (error) {
+      console.error('Error auto-encoding token:', error)
+    }
+  }
 
   const resetFields = () => {
     setHeader(null)
@@ -164,25 +203,26 @@ function DecodedSections({ token }) {
     setEncodedToken('')
   }
 
-  const decodeToken = async () => {
+  const decodeToken = () => {
     try {
-      const response = await fetch(`${API_BASE}/decode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setHeader(data.header)
-        setPayload(data.payload)
-        setSignature(data.signature || '')
-        setAlgorithm(data.header.alg || 'HS256')
-      } else {
-        console.error('Failed to decode token')
+      const parts = token.split('.')
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format')
       }
+
+      // Client-side Base64 decoding
+      const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')))
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+      const signature = parts[2]
+
+      setHeader(header)
+      setPayload(payload)
+      setSignature(signature)
+      setAlgorithm(header.alg || 'HS256')
     } catch (error) {
       console.error('Error decoding token:', error)
+      // Reset fields on decode error
+      resetFields()
     }
   }
 
@@ -190,24 +230,66 @@ function DecodedSections({ token }) {
     try {
       const headerObj = { ...header, alg: algorithm }
 
-      const response = await fetch(`${API_BASE}/encode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          header: headerObj,
-          payload: payload,
-          secret: secret || ''
-        })
-      })
+      // Client-side Base64URL encoding
+      const base64UrlEncode = (obj) => {
+        return btoa(JSON.stringify(obj))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '')
+      }
 
-      if (response.ok) {
-        const data = await response.json()
-        setEncodedToken(data.token)
+      const encodedHeader = base64UrlEncode(headerObj)
+      const encodedPayload = base64UrlEncode(payload)
+
+      // For algorithms that require server-side signing (asymmetric or HMAC with secret)
+      if (algorithm.startsWith('HS') && secret.trim()) {
+        // HMAC algorithms - need server for signing
+        const response = await fetch(`${API_BASE}/encode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            header: headerObj,
+            payload: payload,
+            secret: secret
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setEncodedToken(data.token)
+        } else {
+          console.error('Failed to encode token with signature')
+        }
+      } else if (algorithm.startsWith('RS') || algorithm.startsWith('ES') || algorithm.startsWith('PS')) {
+        // Asymmetric algorithms - would need private key (not implemented in this demo)
+        alert('Asymmetric algorithms (RS*/ES*/PS*) require private keys and are not supported in this demo. Use HS* algorithms with a secret instead.')
+      } else if (algorithm === 'none') {
+        // No signature - can be done client-side
+        const unsignedToken = `${encodedHeader}.${encodedPayload}.`
+        setEncodedToken(unsignedToken)
       } else {
-        console.error('Failed to encode token')
+        // Default: create unsigned token structure
+        const unsignedToken = `${encodedHeader}.${encodedPayload}.`
+        setEncodedToken(unsignedToken)
       }
     } catch (error) {
       console.error('Error encoding token:', error)
+    }
+  }
+
+  const handleHeaderEdit = (newHeader) => {
+    setHeader(newHeader)
+  }
+
+  const handlePayloadEdit = (newPayload) => {
+    setPayload(newPayload)
+  }
+
+  const handleAlgorithmChange = (newAlgorithm) => {
+    setAlgorithm(newAlgorithm)
+    // Update header with new algorithm
+    if (header) {
+      setHeader({ ...header, alg: newAlgorithm })
     }
   }
 
@@ -221,6 +303,7 @@ function DecodedSections({ token }) {
     setVerificationResult(null)
 
     try {
+      // Only signature verification needs server-side processing
       const response = await fetch(`${API_BASE}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -231,7 +314,7 @@ function DecodedSections({ token }) {
       setVerificationResult(data)
     } catch (error) {
       console.error('Error verifying token:', error)
-      setVerificationResult({ valid: false, error: 'Network error' })
+      setVerificationResult({ valid: false, error: 'Network error during signature verification' })
     } finally {
       setIsVerifying(false)
     }
@@ -245,7 +328,7 @@ function DecodedSections({ token }) {
         subtitle="ALGORITHM & TOKEN TYPE"
         data={header}
         colorClass="bg-gray-50 dark:bg-gray-700"
-        onEdit={setHeader}
+        onEdit={handleHeaderEdit}
       />
 
       {/* Payload Section */}
@@ -254,7 +337,7 @@ function DecodedSections({ token }) {
         subtitle="DATA"
         data={payload}
         colorClass="bg-gray-50 dark:bg-gray-700"
-        onEdit={setPayload}
+        onEdit={handlePayloadEdit}
       />
 
       {/* Verify Signature Section */}
@@ -290,7 +373,7 @@ function DecodedSections({ token }) {
             </label>
             <select
               value={algorithm}
-              onChange={(e) => setAlgorithm(e.target.value)}
+              onChange={(e) => handleAlgorithmChange(e.target.value)}
               className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm"
             >
               <option value="HS256">HS256</option>
@@ -322,6 +405,22 @@ function DecodedSections({ token }) {
             >
               Generate Token
             </button>
+          </div>
+
+          {/* Privacy Notice */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div className="flex items-start space-x-2">
+              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="font-medium">Privacy Protected & Real-time Editing:</p>
+                <p>• JWT decoding happens in your browser - tokens never leave your device</p>
+                <p>• <strong>Live editing</strong>: Changes to header/payload automatically update the encoded token</p>
+                <p>• Only signature verification and HMAC signing require server processing</p>
+                <p>• Asymmetric algorithms (RS*/ES*) are not supported for security reasons</p>
+              </div>
+            </div>
           </div>
 
           {/* Verification Result */}

@@ -37,6 +37,11 @@ JWT Security Checker is a professional-grade security testing platform designed 
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Real-time Updates** - Live feedback during security testing operations
 
+### 🛡️ **JWT Scanner**
+- **Automated JWT Vulnerability Scanner** - Scan tokens for common vulnerabilities (none algorithm, weak secrets, insecure claims, etc.)
+- **Detailed Security Reports** - Get actionable insights and recommendations
+- **One-Click Scan** - Instantly analyze any JWT for security issues
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -80,6 +85,7 @@ graph TD
 | **Frontend** | React + Vite + Tailwind CSS | 3000 | User interface |
 | **Backend** | Node.js + Express | 8000 | API endpoints |
 | **Worker** | Python + FastAPI | - | JWT processing |
+| **JWT Scanner** | Node.js + Custom Logic | - | Automated JWT vulnerability scanning |
 | **Nginx** | Reverse Proxy | 80/443 | Production routing |
 
 ## 📖 Usage Guide
@@ -109,7 +115,13 @@ graph TD
    - Optional: Upload custom wordlist
    - Click "Start Attack" and monitor progress
 
-2. **Use Security Tools**
+2. **Scan JWT for Vulnerabilities**
+   - Go to the "JWT Scanner" section
+   - Paste or upload your JWT token
+   - Click "Scan Token"
+   - Review the detailed security report and recommendations
+
+3. **Use Security Tools**
    - Visit the "Tools" section
    - Browse available penetration testing tools
    - Follow installation and usage guides

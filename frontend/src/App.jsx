@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification, LibrariesPage } from './components'
+import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification, LibrariesPage, ScannerPage } from './components'
 import './App.css'
 
 function App() {
   const [theme, setTheme] = useState('dark') // Default to dark mode
   const [token, setToken] = useState('')
-  const [currentView, setCurrentView] = useState('decoder') // 'decoder', 'crack', or 'libraries'
+  const [currentView, setCurrentView] = useState('decoder') // 'decoder', 'crack', 'scanner', or 'libraries'
 
   useEffect(() => {
     // Apply theme to document
@@ -47,7 +47,17 @@ function App() {
                   : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
             >
-              JWT Security Testing
+              JWT Cracker
+            </button>
+            <button
+              onClick={() => setCurrentView('scanner')}
+              className={`py-3 px-6 border-b-3 font-medium text-sm transition-colors ${
+                currentView === 'scanner'
+                  ? 'border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-400'
+                  : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              JWT Scanner
             </button>
           </nav>
         </div>
@@ -56,92 +66,94 @@ function App() {
       <main className="flex-1 w-full">
         {currentView === 'libraries' ? (
           <LibrariesPage />
+        ) : currentView === 'scanner' ? (
+          <ScannerPage token={token} setToken={setToken} />
         ) : (
           <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {currentView === 'decoder' ? (
-          <>
-            {/* JWT.io style intro */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                JSON Web Tokens
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                JSON Web Tokens are an open, industry standard{' '}
-                <a 
-                  href="https://tools.ietf.org/html/rfc7519" 
-                  className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  RFC 7519
-                </a>{' '}
-                method for representing claims securely between two parties.
-              </p>
-            </div>
-
-            {/* Main decoder layout - JWT.io style */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Left Column - Token Input (60% width) */}
-              <div className="lg:col-span-3">
-                <TokenInput 
-                  token={token} 
-                  setToken={setToken} 
-                  onTokenChange={handleTokenChange}
-                />
-              </div>
-
-              {/* Right Column - Decoded sections (40% width) */}
-              <div className="lg:col-span-2 space-y-4">
-                <DecodedSections token={token} />
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Crack section intro */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                JWT Security Testing
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                Test the security of JWT implementations by attempting to crack weak secrets using dictionary attacks.
-              </p>
-            </div>
-
-            {/* Token input for cracking */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <TokenInput 
-                token={token} 
-                setToken={setToken} 
-                onTokenChange={handleTokenChange}
-              />
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  ⚠️ Security Testing Guidelines
-                </h3>
-                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <p className="font-medium text-amber-600 dark:text-amber-400">
-                    Only test JWTs that you own or have explicit permission to test.
+              <>
+                {/* JWT.io style intro */}
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    JSON Web Tokens
+                  </h1>
+                  <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                    JSON Web Tokens are an open, industry standard{' '}
+                    <a 
+                      href="https://tools.ietf.org/html/rfc7519" 
+                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      RFC 7519
+                    </a>{' '}
+                    method for representing claims securely between two parties.
                   </p>
-                  <p>
-                    This tool attempts to crack JWT secrets using common passwords and dictionary attacks.
-                  </p>
-                  <p>
-                    Use strong, randomly generated secrets (at least 256 bits) for production systems.
-                  </p>
-                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <p className="text-green-700 dark:text-green-300 text-sm font-medium">
-                      🔒 Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
-                    </p>
+                </div>
+
+                {/* Main decoder layout - JWT.io style */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                  {/* Left Column - Token Input (60% width) */}
+                  <div className="lg:col-span-3">
+                    <TokenInput 
+                      token={token} 
+                      setToken={setToken} 
+                      onTokenChange={handleTokenChange}
+                    />
+                  </div>
+
+                  {/* Right Column - Decoded sections (40% width) */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <DecodedSections token={token} setToken={setToken} />
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : currentView === 'crack' ? (
+              <>
+                {/* Crack section intro */}
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    JWT Cracker
+                  </h1>
+                  <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+                    Test the security of JWT implementations by attempting to crack weak secrets using dictionary attacks.
+                  </p>
+                </div>
 
-            {/* Crack section */}
-            <CrackSection token={token} />
-          </>
-            )}
+                {/* Token input for cracking */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  <TokenInput 
+                    token={token} 
+                    setToken={setToken} 
+                    onTokenChange={handleTokenChange}
+                  />
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      ⚠️ Security Testing Guidelines
+                    </h3>
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <p className="font-medium text-amber-600 dark:text-amber-400">
+                        Only test JWTs that you own or have explicit permission to test.
+                      </p>
+                      <p>
+                        This tool attempts to crack JWT secrets using common passwords and dictionary attacks.
+                      </p>
+                      <p>
+                        Use strong, randomly generated secrets (at least 256 bits) for production systems.
+                      </p>
+                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <p className="text-green-700 dark:text-green-300 text-sm font-medium">
+                          🔒 Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Crack section */}
+                <CrackSection token={token} />
+              </>
+            ) : null}
           </div>
         )}
       </main>
