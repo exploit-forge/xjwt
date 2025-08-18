@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import TimestampCell from './TimestampCell'
+import JSONWithTimestampTooltips from './JSONWithTimestampTooltips'
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api' // Only needed for verify/encode with HMAC
 
@@ -21,6 +23,9 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
   const renderClaimsTable = () => {
     if (!data || typeof data !== 'object') return null
 
+    // Define timestamp fields that should use TimestampCell
+    const timestampFields = ['iat', 'exp', 'nbf', 'auth_time', 'updated_at', 'created_at', 'refresh_token_expires_at']
+
     return (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -28,8 +33,14 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
             {Object.entries(data).map(([key, value]) => (
               <tr key={key} className="border-b border-gray-200 dark:border-gray-700">
                 <td className="py-2 pr-4 font-mono text-purple-600 dark:text-purple-400">{key}</td>
-                <td className="py-2 font-mono text-gray-700 dark:text-gray-300">
-                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                <td className="py-2">
+                  {timestampFields.includes(key) ? (
+                    <TimestampCell value={value} fieldName={key} />
+                  ) : (
+                    <span className="font-mono text-gray-700 dark:text-gray-300">
+                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -103,8 +114,9 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
       {/* Content */}
       <div className="p-4 bg-gray-50 dark:bg-gray-900">
         {activeTab === 'json' ? (
-          <textarea
-            value={editedData}
+          <JSONWithTimestampTooltips
+            data={data}
+            editedData={editedData}
             onChange={(e) => {
               setEditedData(e.target.value)
               if (onEdit) {
@@ -117,10 +129,6 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
               }
             }}
             readOnly={!editable}
-            className={`w-full h-32 p-3 font-mono text-sm bg-transparent border-0 focus:ring-0 resize-none ${
-              !editable ? 'cursor-default' : ''
-            }`}
-            spellCheck={false}
           />
         ) : (
           <div className="min-h-[8rem]">

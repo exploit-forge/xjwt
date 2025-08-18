@@ -203,6 +203,137 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
       riskScore += riskIncrease
     }
 
+    // Enhanced timestamp validation and security checks
+    const now = Math.floor(Date.now() / 1000) // Current Unix timestamp
+    
+    // Check if token is expired
+    if (payload.exp && payload.exp < now) {
+      const expiredMinutes = Math.floor((now - payload.exp) / 60)
+      const expiredHours = Math.floor(expiredMinutes / 60)
+      const expiredDays = Math.floor(expiredHours / 24)
+      
+      let timeAgo = ''
+      if (expiredDays > 0) {
+        timeAgo = `${expiredDays} day${expiredDays !== 1 ? 's' : ''} ago`
+      } else if (expiredHours > 0) {
+        timeAgo = `${expiredHours} hour${expiredHours !== 1 ? 's' : ''} ago`
+      } else {
+        timeAgo = `${expiredMinutes} minute${expiredMinutes !== 1 ? 's' : ''} ago`
+      }
+      
+      issues.push({
+        severity: 'High',
+        category: 'Token Status',
+        issue: `Token is expired (expired ${timeAgo})`,
+        recommendation: 'This token should not be accepted by any service. Implement proper token expiration checking.',
+        impact: 'Expired tokens should be rejected to prevent replay attacks and unauthorized access'
+      })
+      securityScore -= 30
+      riskScore += 40
+    }
+    
+    // Check if token is not yet valid (nbf)
+    if (payload.nbf && payload.nbf > now) {
+      const notValidMinutes = Math.floor((payload.nbf - now) / 60)
+      const notValidHours = Math.floor(notValidMinutes / 60)
+      
+      let timeUntil = ''
+      if (notValidHours > 0) {
+        timeUntil = `${notValidHours} hour${notValidHours !== 1 ? 's' : ''}`
+      } else {
+        timeUntil = `${notValidMinutes} minute${notValidMinutes !== 1 ? 's' : ''}`
+      }
+      
+      issues.push({
+        severity: 'Medium',
+        category: 'Token Status',
+        issue: `Token is not yet valid (valid in ${timeUntil})`,
+        recommendation: 'Ensure systems properly validate nbf claim before accepting tokens.',
+        impact: 'Premature token use could indicate clock synchronization issues or token misuse'
+      })
+      securityScore -= 15
+      riskScore += 20
+    }
+    
+    // Check token lifetime (if both iat and exp are present)
+    if (payload.iat && payload.exp) {
+      const lifetimeSeconds = payload.exp - payload.iat
+      const lifetimeMinutes = Math.floor(lifetimeSeconds / 60)
+      const lifetimeHours = Math.floor(lifetimeMinutes / 60)
+      const lifetimeDays = Math.floor(lifetimeHours / 24)
+      
+      // Check for extremely long lifetime (> 30 days)
+      if (lifetimeSeconds > (30 * 24 * 60 * 60)) {
+        issues.push({
+          severity: 'High',
+          category: 'Token Lifetime',
+          issue: `Extremely long token lifetime: ${lifetimeDays} days`,
+          recommendation: 'Use shorter token lifetimes (recommended: 15 minutes to 24 hours). Implement token refresh for longer sessions.',
+          impact: 'Long-lived tokens increase security risk if compromised and make token rotation difficult'
+        })
+        securityScore -= 25
+        riskScore += 35
+      }
+      // Check for very long lifetime (> 7 days)
+      else if (lifetimeSeconds > (7 * 24 * 60 * 60)) {
+        issues.push({
+          severity: 'Medium',
+          category: 'Token Lifetime',
+          issue: `Very long token lifetime: ${lifetimeDays} days`,
+          recommendation: 'Consider shorter token lifetimes for better security. Recommended: 1-24 hours for access tokens.',
+          impact: 'Long-lived tokens pose higher security risk if compromised'
+        })
+        securityScore -= 15
+        riskScore += 20
+      }
+      // Check for very short lifetime (< 5 minutes)
+      else if (lifetimeSeconds < (5 * 60)) {
+        issues.push({
+          severity: 'Low',
+          category: 'Token Lifetime',
+          issue: `Very short token lifetime: ${lifetimeMinutes} minutes`,
+          recommendation: 'Ensure token lifetime is sufficient for your use case. Very short lifetimes may cause usability issues.',
+          impact: 'May cause frequent authentication prompts and poor user experience'
+        })
+        securityScore -= 5
+        riskScore += 5
+      }
+    }
+    
+    // Check if token is expiring soon (within 15 minutes)
+    if (payload.exp && payload.exp > now) {
+      const timeToExpiry = payload.exp - now
+      if (timeToExpiry < (15 * 60)) { // 15 minutes
+        const minutesLeft = Math.floor(timeToExpiry / 60)
+        issues.push({
+          severity: 'Info',
+          category: 'Token Status',
+          issue: `Token expires soon (in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''})`,
+          recommendation: 'This is informational. Consider implementing token refresh before expiration.',
+          impact: 'Token will need renewal soon to maintain access'
+        })
+      }
+    }
+    
+    // Check for invalid timestamp values
+    ['iat', 'exp', 'nbf'].forEach(claim => {
+      if (payload[claim] !== undefined) {
+        const timestamp = Number(payload[claim])
+        // Check if timestamp is reasonable (between year 2000 and 2100)
+        if (isNaN(timestamp) || timestamp < 946684800 || timestamp > 4102444800) {
+          issues.push({
+            severity: 'Medium',
+            category: 'Claims',
+            issue: `Invalid timestamp in ${claim} claim: ${payload[claim]}`,
+            recommendation: `Ensure ${claim} contains a valid Unix timestamp`,
+            impact: 'Invalid timestamps prevent proper token validation'
+          })
+          securityScore -= 15
+          riskScore += 20
+        }
+      }
+    })
+
     // Check for sensitive data in payload
     const sensitiveFields = ['password', 'secret', 'key', 'token', 'ssn', 'social_security', 'credit_card', 'cc_number']
     const foundSensitive = []
