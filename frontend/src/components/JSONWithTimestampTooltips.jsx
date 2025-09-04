@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function JSONWithTimestampTooltips({ data, editedData, onChange, readOnly = false }) {
+function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnly = false }) {
   const [tooltip, setTooltip] = useState({ show: false, content: '', x: 0, y: 0 })
 
   // Check if a value looks like a Unix timestamp
@@ -34,8 +34,10 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, readOnly = fals
       <textarea
         value={editedData}
         onChange={onChange}
+        onBlur={onBlur}
         className="w-full h-32 p-3 font-mono text-sm bg-transparent border-0 focus:ring-0 resize-none"
         spellCheck={false}
+        placeholder="Edit JSON here..."
       />
     )
   }

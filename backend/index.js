@@ -47,10 +47,12 @@ app.post('/encode', [
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   const { header, payload, secret } = req.body;
   try {
-    const token = jwt.sign(payload, secret || '', { 
+    const signOptions = { 
       header,
-      noTimestamp: true 
-    });
+      noTimestamp: !payload.hasOwnProperty('iat') // Only prevent timestamp if no existing iat
+    };
+    
+    const token = jwt.sign(payload, secret || '', signOptions);
     res.json({ token });
   } catch (err) {
     res.status(400).json({ error: err.message });
