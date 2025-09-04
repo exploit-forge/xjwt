@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import TimestampCell from './TimestampCell'
 import JSONWithTimestampTooltips from './JSONWithTimestampTooltips'
 
@@ -8,10 +8,75 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
   const [activeTab, setActiveTab] = useState('json')
   const [editedData, setEditedData] = useState('')
   const [copyStatus, setCopyStatus] = useState('')
+  const [isValidJSON, setIsValidJSON] = useState(true)
+  const debounceTimerRef = useRef(null)
 
   useEffect(() => {
     setEditedData(data ? JSON.stringify(data, null, 2) : '')
+    setIsValidJSON(true)
   }, [data])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Debounced JSON validation - only for visual feedback, doesn't update parent
+  const debouncedValidation = useCallback((value) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      try {
+        JSON.parse(value)
+        setIsValidJSON(true)
+      } catch (e) {
+        setIsValidJSON(false)
+      }
+    }, 300) // Shorter delay for just validation
+  }, [])
+
+  const handleJSONChange = (e) => {
+    const value = e.target.value
+    setEditedData(value)
+    
+    // Immediate visual validation (try to parse, but don't show errors immediately for better UX)
+    try {
+      JSON.parse(value)
+      setIsValidJSON(true)
+    } catch (e) {
+      // Don't immediately mark as invalid - wait for debounced validation
+      // This prevents "Invalid JSON" flashing while user is typing
+    }
+    
+    // Debounced validation for showing errors
+    debouncedValidation(value)
+  }
+
+  // Handle blur event - ONLY place where we update the parent component
+  const handleJSONBlur = () => {
+    // Clear any pending validation timers
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    
+    // Only update parent if JSON is valid and there are actual edits
+    if (onEdit && editedData.trim()) {
+      try {
+        const parsed = JSON.parse(editedData)
+        onEdit(parsed)
+        setIsValidJSON(true)
+      } catch (e) {
+        setIsValidJSON(false)
+        // Don't update parent with invalid JSON
+      }
+    }
+  }
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(editedData).then(() => {
@@ -114,22 +179,26 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
       {/* Content */}
       <div className="p-4 bg-gray-50 dark:bg-gray-900">
         {activeTab === 'json' ? (
-          <JSONWithTimestampTooltips
-            data={data}
-            editedData={editedData}
-            onChange={(e) => {
-              setEditedData(e.target.value)
-              if (onEdit) {
-                try {
-                  const parsed = JSON.parse(e.target.value)
-                  onEdit(parsed)
-                } catch (e) {
-                  // Invalid JSON, don't update
-                }
-              }
-            }}
-            readOnly={!editable}
-          />
+          <div className="relative">
+            <JSONWithTimestampTooltips
+              data={data}
+              editedData={editedData}
+              onChange={handleJSONChange}
+              onBlur={handleJSONBlur}
+              readOnly={!editable}
+            />
+            {/* JSON Validation Status */}
+            {!isValidJSON && editedData && (
+              <div className="absolute top-2 right-2 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded px-2 py-1 text-xs text-red-600 dark:text-red-400">
+                Invalid JSON
+              </div>
+            )}
+            {isValidJSON && editedData && (
+              <div className="absolute top-2 right-8 bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded px-2 py-1 text-xs text-green-600 dark:text-green-400">
+                Valid JSON
+              </div>
+            )}
+          </div>
         ) : (
           <div className="min-h-[8rem]">
             {renderClaimsTable()}
@@ -155,6 +224,8 @@ function DecodedSections({ token, setToken }) {
   const [verificationResult, setVerificationResult] = useState(null)
   const [encodedToken, setEncodedToken] = useState('')
   const [isInternalUpdate, setIsInternalUpdate] = useState(false)
+  const [hasBeenModified, setHasBeenModified] = useState(false)
+  const [isAutoSigning, setIsAutoSigning] = useState(false)
 
   // Decode token whenever it changes (from external input only)
   useEffect(() => {
@@ -175,6 +246,32 @@ function DecodedSections({ token, setToken }) {
     }
   }, [header, payload, algorithm])
 
+  // Auto-sign token when secret changes (if we have content and a valid secret)
+  useEffect(() => {
+    if (secret && secret.trim() && header && payload && hasBeenModified) {
+      autoSignToken()
+    } else if (algorithm === 'none' && hasBeenModified && header && payload) {
+      // Special case: 'none' algorithm should create unsigned token
+      const base64UrlEncode = (obj) => {
+        return btoa(JSON.stringify(obj))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '')
+      }
+      const headerObj = { ...header, alg: 'none' }
+      const encodedHeader = base64UrlEncode(headerObj)
+      const encodedPayload = base64UrlEncode(payload)
+      const unsignedToken = `${encodedHeader}.${encodedPayload}.`
+      
+      setIsInternalUpdate(true)
+      setToken(unsignedToken)
+      setSignature('')
+      setHasBeenModified(false)
+    }
+    // Note: We preserve the original signature for display when secret is cleared
+    // Only the 'none' algorithm explicitly creates unsigned tokens
+  }, [secret, header, payload, hasBeenModified, algorithm])
+
   const autoEncodeToken = () => {
     try {
       const headerObj = { ...header, alg: algorithm }
@@ -190,9 +287,13 @@ function DecodedSections({ token, setToken }) {
       const encodedHeader = base64UrlEncode(headerObj)
       const encodedPayload = base64UrlEncode(payload)
 
-      // For real-time editing, create unsigned token structure
-      // User can sign it later if needed
+      // For live editing, keep the old signature initially
+      // It will be replaced automatically when user enters a secret
       const newToken = `${encodedHeader}.${encodedPayload}.${signature || ''}`
+      
+      // Mark that content was modified (for visual feedback)
+      setHasBeenModified(true)
+      setVerificationResult(null) // Clear any previous verification results
       
       // Mark as internal update to prevent decode loop
       setIsInternalUpdate(true)
@@ -203,12 +304,71 @@ function DecodedSections({ token, setToken }) {
     }
   }
 
+  // Auto-sign token when user enters a secret
+  const autoSignToken = async () => {
+    try {
+      setIsAutoSigning(true)
+      const headerObj = { ...header, alg: algorithm }
+
+      // Only auto-sign for HMAC algorithms with secrets
+      if (algorithm.startsWith('HS') && secret.trim()) {
+        const response = await fetch(`${API_BASE}/encode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            header: headerObj,
+            payload: payload,
+            secret: secret
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Update the signature from the new signed token
+          const newSignature = data.token.split('.')[2]
+          setSignature(newSignature)
+          
+          // Update the main token with the properly signed version
+          setIsInternalUpdate(true)
+          setToken(data.token)
+          
+          // Clear the modified flag since it's now properly signed
+          setHasBeenModified(false)
+        }
+      } else if (algorithm === 'none') {
+        // For 'none' algorithm, clear signature
+        setSignature('')
+        const headerObj = { ...header, alg: 'none' }
+        const base64UrlEncode = (obj) => {
+          return btoa(JSON.stringify(obj))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '')
+        }
+        const encodedHeader = base64UrlEncode(headerObj)
+        const encodedPayload = base64UrlEncode(payload)
+        const unsignedToken = `${encodedHeader}.${encodedPayload}.`
+        
+        setIsInternalUpdate(true)
+        setToken(unsignedToken)
+        setHasBeenModified(false)
+      }
+    } catch (error) {
+      console.error('Error auto-signing token:', error)
+    } finally {
+      setIsAutoSigning(false)
+    }
+  }
+
   const resetFields = () => {
     setHeader(null)
     setPayload(null)
     setSignature('')
     setVerificationResult(null)
     setEncodedToken('')
+    setHasBeenModified(false)
+    setIsAutoSigning(false)
   }
 
   const decodeToken = () => {
@@ -227,6 +387,7 @@ function DecodedSections({ token, setToken }) {
       setPayload(payload)
       setSignature(signature)
       setAlgorithm(header.alg || 'HS256')
+      setHasBeenModified(false) // Reset modified flag when decoding fresh token
     } catch (error) {
       console.error('Error decoding token:', error)
       // Reset fields on decode error
@@ -265,6 +426,8 @@ function DecodedSections({ token, setToken }) {
         if (response.ok) {
           const data = await response.json()
           setEncodedToken(data.token)
+          setHasBeenModified(false) // Reset modified flag when token is properly signed
+          setSignature(data.token.split('.')[2]) // Update signature from the new token
         } else {
           console.error('Failed to encode token with signature')
         }
@@ -275,10 +438,14 @@ function DecodedSections({ token, setToken }) {
         // No signature - can be done client-side
         const unsignedToken = `${encodedHeader}.${encodedPayload}.`
         setEncodedToken(unsignedToken)
+        setHasBeenModified(false) // Reset modified flag
+        setSignature('') // No signature for 'none' algorithm
       } else {
         // Default: create unsigned token structure
         const unsignedToken = `${encodedHeader}.${encodedPayload}.`
         setEncodedToken(unsignedToken)
+        setHasBeenModified(false) // Reset modified flag
+        setSignature('') // No signature
       }
     } catch (error) {
       console.error('Error encoding token:', error)
@@ -360,18 +527,66 @@ function DecodedSections({ token, setToken }) {
         </div>
         
         <div className="p-6 space-y-4">
+          {/* Token Modified Warning */}
+          {hasBeenModified && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    Token Modified - Signature May Be Invalid
+                  </h4>
+                  <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                    <p>You've edited this JWT. The current signature may not match the new content.</p>
+                    <p className="mt-1">
+                      <strong>💡 Enter your secret below</strong> to automatically re-sign with the new content!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Secret Input */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Enter the secret used to sign the JWT:
             </label>
-            <input
-              type="text"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              placeholder="your-256-bit-secret"
-              className="w-full px-4 py-2 font-mono text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                placeholder="your-256-bit-secret"
+                className="w-full px-4 py-2 pr-10 font-mono text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              />
+              {/* Auto-signing status indicator */}
+              {isAutoSigning && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              {!hasBeenModified && secret && !isAutoSigning && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            {/* Auto-signing feedback */}
+            {isAutoSigning && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center">
+                <span className="mr-1">🔄</span> Auto-signing token with your secret...
+              </p>
+            )}
+            {!hasBeenModified && secret && !isAutoSigning && (
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center">
+                <span className="mr-1">✅</span> Token automatically signed! Ready to verify.
+              </p>
+            )}
           </div>
 
           {/* Algorithm Selection */}
@@ -422,10 +637,11 @@ function DecodedSections({ token, setToken }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               <div className="text-sm text-blue-700 dark:text-blue-300">
-                <p className="font-medium">Privacy Protected & Real-time Editing:</p>
+                <p className="font-medium">Privacy Protected & Real-time Auto-Signing:</p>
                 <p>• JWT decoding happens in your browser - tokens never leave your device</p>
+                <p>• <strong>Auto-signing</strong>: When you enter a secret, the token is automatically re-signed</p>
                 <p>• <strong>Live editing</strong>: Changes to header/payload automatically update the encoded token</p>
-                <p>• Only signature verification and HMAC signing require server processing</p>
+                <p>• Only signature operations require server processing (for security)</p>
                 <p>• Asymmetric algorithms (RS*/ES*) are not supported for security reasons</p>
               </div>
             </div>
