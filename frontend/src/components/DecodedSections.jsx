@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import TimestampCell from './TimestampCell'
 import JSONWithTimestampTooltips from './JSONWithTimestampTooltips'
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api' // Only needed for verify/encode with HMAC
+const API_BASE = import.meta.env.VITE_BACKEND_URL || '/api'
 
 function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = true }) {
   const [activeTab, setActiveTab] = useState('json')
@@ -541,7 +541,7 @@ function DecodedSections({ token, setToken }) {
                   <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
                     <p>You've edited this JWT. The current signature may not match the new content.</p>
                     <p className="mt-1">
-                      <strong>💡 Enter your secret below</strong> to automatically re-sign with the new content!
+                      <strong> Enter your secret below</strong> to automatically re-sign with the new content!
                     </p>
                   </div>
                 </div>

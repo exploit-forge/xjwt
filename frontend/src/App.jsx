@@ -129,7 +129,7 @@ function App() {
                   />
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      ⚠️ Security Testing Guidelines
+                      Security Testing Guidelines
                     </h3>
                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                       <p className="font-medium text-amber-600 dark:text-amber-400">
@@ -143,7 +143,7 @@ function App() {
                       </p>
                       <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <p className="text-green-700 dark:text-green-300 text-sm font-medium">
-                          🔒 Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
+                           Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
                         </p>
                       </div>
                     </div>

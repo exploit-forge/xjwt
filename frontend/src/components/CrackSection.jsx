@@ -262,7 +262,7 @@ function CrackSection({ token }) {
                 crackedSecret ? 'text-green-600 dark:text-green-400' : 
                 'text-gray-600 dark:text-gray-400'
               }`}>
-                {isRunning ? '🏃‍♂️ Running' : crackedSecret ? '✅ Success' : '⏹️ Idle'}
+                {isRunning ? 'Running' : crackedSecret ? 'Success' : 'Idle'}
               </div>
               {progress && (
                 <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -309,7 +309,7 @@ function CrackSection({ token }) {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-2">
-                  🎉 Secret Cracked Successfully!
+                  Secret Cracked Successfully!
                 </h3>
                 <div className="space-y-2">
                   <div className="text-sm text-green-700 dark:text-green-400">
@@ -370,7 +370,7 @@ function CrackSection({ token }) {
         {/* Tips */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
-            💡 Tips for Effective JWT Cracking
+            Tips for Effective JWT Cracking
           </h4>
           <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
             <li>• Default wordlist contains 100000+ common JWT secrets</li>
