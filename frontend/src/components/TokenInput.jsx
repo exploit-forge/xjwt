@@ -8,50 +8,56 @@ function TokenInput({ token, setToken, onTokenChange }) {
   const [isSigned, setIsSigned] = useState(false)
 
   useEffect(() => {
-    if (token) {
-      const tokenParts = token.split('.')
-      setParts([
-        tokenParts[0] || '',
-        tokenParts[1] || '',
-        tokenParts[2] || ''
-      ])
-      
-      // Client-side validation - check if it's a valid JWT structure
-      if (tokenParts.length !== 3) {
-        setIsValidToken(false)
-        setValidationError('Invalid JWT format - must have exactly 3 parts separated by dots')
-        return
-      }
-      
-      if (!tokenParts[0] || !tokenParts[1]) {
-        setIsValidToken(false)
-        setValidationError('Invalid JWT - missing header or payload')
-        return
-      }
-      
-      // Additionally validate that header and payload are valid Base64/JSON
-      try {
-        const header = JSON.parse(atob(tokenParts[0].replace(/-/g, '+').replace(/_/g, '/')))
-        const payload = JSON.parse(atob(tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')))
-        setIsValidToken(true)
-        setValidationError('')
-        
-        // Check if token has a signature
-        setIsSigned(tokenParts[2] && tokenParts[2].length > 0)
-      } catch (error) {
-        setIsValidToken(false)
-        setValidationError('Invalid JWT - header or payload is not valid Base64/JSON')
-        setIsSigned(false)
-      }
-      
-      if (onTokenChange) {
-        onTokenChange(token)
-      }
-    } else {
+    if (!token) {
       setParts(['', '', ''])
       setIsValidToken(false)
       setValidationError('')
       setIsSigned(false)
+      return
+    }
+
+    const tokenParts = token.split('.')
+    const normalizedParts =
+      tokenParts.length === 1
+        ? ['', tokenParts[0] || '', '']
+        : tokenParts.length === 2
+          ? [tokenParts[0] || '', tokenParts[1] || '', '']
+          : [
+              tokenParts[0] || '',
+              tokenParts[1] || '',
+              tokenParts[2] || ''
+            ]
+    setParts(normalizedParts)
+
+    const hasFullStructure = tokenParts.length === 3 && tokenParts[0] && tokenParts[1]
+    let hasDecodeError = false
+
+    try {
+      if (normalizedParts[0]) {
+        JSON.parse(atob(normalizedParts[0].replace(/-/g, '+').replace(/_/g, '/')))
+      }
+      if (normalizedParts[1]) {
+        JSON.parse(atob(normalizedParts[1].replace(/-/g, '+').replace(/_/g, '/')))
+      }
+    } catch (error) {
+      hasDecodeError = true
+    }
+
+    if (hasFullStructure && !hasDecodeError) {
+      setIsValidToken(true)
+      setValidationError('')
+    } else if (!hasFullStructure) {
+      setIsValidToken(false)
+      setValidationError('Incomplete JWT - expected 3 parts separated by dots')
+    } else {
+      setIsValidToken(false)
+      setValidationError('Invalid JWT - header or payload is not valid Base64/JSON')
+    }
+
+    setIsSigned(Boolean(normalizedParts[2]))
+
+    if (onTokenChange) {
+      onTokenChange(token)
     }
   }, [token, onTokenChange])
 
