@@ -229,12 +229,14 @@ function DecodedSections({ token, setToken }) {
 
   // Decode token whenever it changes (from external input only)
   useEffect(() => {
+    if (!token) {
+      resetFields()
+      setIsInternalUpdate(false)
+      return
+    }
+
     if (!isInternalUpdate) {
-      if (token) {
-        decodeToken()
-      } else {
-        resetFields()
-      }
+      decodeToken()
     }
     setIsInternalUpdate(false) // Reset flag
   }, [token])
