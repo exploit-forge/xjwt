@@ -1,5 +1,4 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const cors = require('cors');
 const fetch = require('node-fetch');
@@ -19,59 +18,7 @@ const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Decode JWT
-app.post('/decode', [
-  body('token').isString().notEmpty(),
-], asyncHandler(async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  const { token } = req.body;
-  try {
-    const decoded = jwt.decode(token, { complete: true });
-    if (!decoded) return res.status(400).json({ error: 'Invalid token' });
-    res.json(decoded);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-}));
-
-// Encode JWT
-app.post('/encode', [
-  body('header').isObject(),
-  body('payload').isObject(),
-  body('secret').optional().isString(),
-], asyncHandler(async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { header, payload, secret } = req.body;
-  try {
-    const signOptions = { 
-      header,
-      noTimestamp: !payload.hasOwnProperty('iat') // Only prevent timestamp if no existing iat
-    };
-    
-    const token = jwt.sign(payload, secret || '', signOptions);
-    res.json({ token });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-}));
-
-// Verify signature
-app.post('/verify', [
-  body('token').isString().notEmpty(),
-  body('secret').isString().notEmpty(),
-], asyncHandler(async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { token, secret } = req.body;
-  jwt.verify(token, secret, (err, decoded) => {
-    if (err) return res.status(400).json({ valid: false, error: err.message });
-    res.json({ valid: true, decoded });
-  });
-}));
+// Note: Encoding/decoding and verification are handled on the client.
 
 // Start cracking job using jwttool-worker service via POST or GET (for SSE clients)
 const crackHandler = async (req, res) => {
