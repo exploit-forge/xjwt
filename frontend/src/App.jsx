@@ -75,19 +75,11 @@ function App() {
                 {/* JWT.io style intro */}
                 <div className="text-center mb-8">
                   <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    JSON Web Tokens
+                    JWT Decoder &amp; Encoder
                   </h1>
                   <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                    JSON Web Tokens are an open, industry standard{' '}
-                    <a 
-                      href="https://tools.ietf.org/html/rfc7519" 
-                      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      RFC 7519
-                    </a>{' '}
-                    method for representing claims securely between two parties.
+                    Decode, inspect, and re-encode JSON Web Tokens in real time. View headers and payloads as you type,
+                    validate signatures with your own secret, and generate updated tokens to test your integrations.
                   </p>
                 </div>
 
