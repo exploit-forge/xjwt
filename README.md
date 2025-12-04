@@ -14,8 +14,9 @@ JWT Security Checker is a professional-grade security testing platform designed 
 
 ### 🔍 **JWT Analysis & Manipulation**
 - **Real-time JWT Decoder/Encoder** - Decode, edit, and encode JWTs with live preview
+- **Client-side Processing** - All decoding/encoding happens in the browser; tokens stay on your device
 - **Signature Verification** - Verify token signatures with custom secrets
-- **Algorithm Support** - Full support for HS256/384/512, RS256/384/512, ES256/384/512, and none
+- **Algorithm Support** - Full symmetric (HS256/384/512) and asymmetric (RS256/384/512, ES256/384/512) support, plus none
 - **Claims Editor** - Interactive JSON and table view for easy claims modification
 
 ### ⚡ **Security Testing Tools**
@@ -67,27 +68,6 @@ JWT Security Checker is a professional-grade security testing platform designed 
 
 That's it! The application will be running with all services configured.
 
-## 🏗️ Architecture
-
-```mermaid
-graph TD
-    A[Frontend - React/Vite] --> B[Backend - Node.js/Express]
-    B --> C[Worker - Python/FastAPI]
-    C --> D[JWT Tool]
-    B --> E[Database/Cache]
-    A --> F[Nginx Reverse Proxy]
-```
-
-### Services
-
-| Service | Technology | Port | Purpose |
-|---------|------------|------|---------|
-| **Frontend** | React + Vite + Tailwind CSS | 3000 | User interface |
-| **Backend** | Node.js + Express | 8000 | API endpoints |
-| **Worker** | Python + FastAPI | - | JWT processing |
-| **JWT Scanner** | Node.js + Custom Logic | - | Automated JWT vulnerability scanning |
-| **Nginx** | Reverse Proxy | 80/443 | Production routing |
-
 ## 📖 Usage Guide
 
 ### Basic JWT Operations
@@ -121,10 +101,6 @@ graph TD
    - Click "Scan Token"
    - Review the detailed security report and recommendations
 
-3. **Use Security Tools**
-   - Visit the "Tools" section
-   - Browse available penetration testing tools
-   - Follow installation and usage guides
 
 ## 🛡️ Security Features
 
@@ -133,102 +109,7 @@ graph TD
 - ✅ Automatic cleanup of temporary files
 - ✅ Server-side processing with immediate deletion
 - ✅ No long-term retention of sensitive information
-
-## 🧪 Development
-
-### Local Development Setup
-
-1. **Clone and install dependencies**
-   ```bash
-   git clone https://github.com/exploit-forge/xjwt.git
-   cd xjwt
-   
-   # Frontend
-   cd frontend
-   npm install
-   
-   # Backend
-   cd ../backend
-   npm install
-   ```
-
-2. **Start development servers**
-   ```bash
-   # Terminal 1 - Backend
-   cd backend
-   npm run dev
-   
-   # Terminal 2 - Frontend
-   cd frontend
-   npm run dev
-   ```
-
-3. **Environment Configuration**
-   ```bash
-   # Frontend (.env)
-   VITE_BACKEND_URL=http://localhost:8000/api
-   
-   # Backend (.env)
-   PORT=8000
-   NODE_ENV=development
-   ```
-
-### Testing
-
-```bash
-# Run all tests
-npm run test
-
-# Frontend tests
-cd frontend && npm test
-
-# Backend tests
-cd backend && npm test
-
-# Integration tests
-npm run test:integration
-```
-
-### Building for Production
-
-```bash
-# Build all services
-docker-compose build
-
-# Or build individually
-cd frontend && npm run build
-cd backend && npm run build
-```
-
-## 📋 API Documentation
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/decode` | Decode JWT token |
-| `POST` | `/api/encode` | Create new JWT token |
-| `POST` | `/api/verify` | Verify JWT signature |
-| `POST` | `/api/crack` | Start JWT cracking attack |
-
-### Example Requests
-
-**Decode JWT**
-```bash
-curl -X POST http://localhost:8000/api/decode \
-  -H "Content-Type: application/json" \
-  -d '{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}'
-```
-
-**Verify Signature**
-```bash
-curl -X POST http://localhost:8000/api/verify \
-  -H "Content-Type: application/json" \
-  -d '{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "secret": "your-secret"}'
-```
-### Security Tools
-- **JWT Tool** - Comprehensive JWT testing toolkit
-- **Custom Wordlists** - Flexible dictionary support
+- ✅ Decode/encode operations run entirely in the frontend, keeping tokens local to your browser
 
 ## 🤝 Contributing
 
@@ -241,13 +122,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-### Code Standards
-
-- ESLint for JavaScript/TypeScript
-- Prettier for code formatting
-- Conventional Commits for commit messages
-- Jest for testing
 
 ## 📄 License
 
