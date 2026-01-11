@@ -4,6 +4,7 @@ const TIMESTAMP_FIELDS = {
   'iat': 'Issued At',
   'exp': 'Expires At',
   'nbf': 'Not Before',
+  'eat': 'Expiration At',
   'auth_time': 'Authentication Time',
   'updated_at': 'Updated At',
   'created_at': 'Created At',
