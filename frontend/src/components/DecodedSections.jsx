@@ -595,14 +595,24 @@ function DecodedSections({ token, setToken }) {
       const encodedPayload = base64UrlEncode(payload)
       const unsignedToken = `${encodedHeader}.${encodedPayload}.`
       
-      setIsInternalUpdate(true)
-      setToken(unsignedToken)
+      updateTokenInternal(unsignedToken)
       setSignature('')
       setHasBeenModified(false)
     }
     // Note: We preserve the original signature for display when secret is cleared
     // Only the 'none' algorithm explicitly creates unsigned tokens
   }, [secret, header, payload, hasBeenModified, algorithm, isHmacAlg])
+
+  const updateTokenInternal = (nextToken) => {
+    if (!setToken) return false
+    if (nextToken === token) {
+      setIsInternalUpdate(false)
+      return false
+    }
+    setIsInternalUpdate(true)
+    setToken(nextToken)
+    return true
+  }
 
   const autoEncodeToken = () => {
     try {
@@ -622,15 +632,15 @@ function DecodedSections({ token, setToken }) {
       // For live editing, keep the old signature initially
       // It will be replaced automatically when user enters a secret
       const newToken = `${encodedHeader}.${encodedPayload}.${signature || ''}`
-      
+      const didUpdate = updateTokenInternal(newToken)
+      if (!didUpdate) {
+        setHasBeenModified(false)
+        return
+      }
+
       // Mark that content was modified (for visual feedback)
       setHasBeenModified(true)
       setVerificationResult(null) // Clear any previous verification results
-      
-      // Mark as internal update to prevent decode loop
-      setIsInternalUpdate(true)
-      // Update the main token state to reflect changes in real-time
-      setToken(newToken)
     } catch (error) {
       console.error('Error auto-encoding token:', error)
     }
@@ -646,8 +656,7 @@ function DecodedSections({ token, setToken }) {
       if (secret.trim()) {
         const { token: signedToken, signature: newSignature } = await signHmac(headerObj, payload, secret, algorithm)
         setSignature(newSignature)
-        setIsInternalUpdate(true)
-        setToken(signedToken)
+        updateTokenInternal(signedToken)
         setHasBeenModified(false)
       }
     } catch (error) {
