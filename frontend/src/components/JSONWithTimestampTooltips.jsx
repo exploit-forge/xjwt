@@ -4,6 +4,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
   const [tooltip, setTooltip] = useState({ show: false, content: '', x: 0, y: 0 })
   const [isEditing, setIsEditing] = useState(false)
   const textareaRef = useRef(null)
+  const highlightRef = useRef(null)
 
   const claimHints = useMemo(() => ({
     alg: 'Algorithm used to sign the token',
@@ -96,7 +97,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
     try {
       JSON.parse(value)
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -106,7 +107,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
     if (trimmed) {
       try {
         return JSON.parse(trimmed)
-      } catch (error) {
+      } catch {
         return null
       }
     }
@@ -209,6 +210,36 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
     return <span className="text-gray-400">{String(value)}</span>
   }
 
+  const renderEditableJson = (value) => {
+    const tokenPattern = /("(?:\\.|[^"\\])*"\s*:)|("(?:\\.|[^"\\])*")|\b(true|false)\b|\b(null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g
+    const parts = []
+    let lastIndex = 0
+    let match
+
+    while ((match = tokenPattern.exec(value)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(value.slice(lastIndex, match.index))
+      }
+
+      const token = match[0]
+      let className = 'text-gray-700 dark:text-gray-300'
+      if (match[1]) className = 'json-key'
+      else if (match[2]) className = 'json-string'
+      else if (match[3]) className = 'json-boolean'
+      else if (match[4]) className = 'text-gray-400'
+      else if (match[5]) className = 'json-number'
+
+      parts.push(<span className={className} key={`${match.index}-${token}`}>{token}</span>)
+      lastIndex = tokenPattern.lastIndex
+    }
+
+    if (lastIndex < value.length) {
+      parts.push(value.slice(lastIndex))
+    }
+
+    return parts
+  }
+
   if (readOnly || !isEditing) {
     return (
       <div className="relative">
@@ -258,16 +289,33 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
     }
   }
 
+  const syncEditorScroll = (event) => {
+    if (!highlightRef.current) return
+    highlightRef.current.scrollTop = event.currentTarget.scrollTop
+    highlightRef.current.scrollLeft = event.currentTarget.scrollLeft
+  }
+
   return (
-    <textarea
-      ref={textareaRef}
-      value={editedData}
-      onChange={onChange}
-      onBlur={handleBlur}
-      className="w-full h-32 p-3 font-mono text-sm bg-transparent border-0 focus:ring-0 resize-none"
-      spellCheck={false}
-      placeholder="Edit JSON here..."
-    />
+    <div className="relative h-32">
+      <pre
+        ref={highlightRef}
+        aria-hidden="true"
+        className="absolute inset-0 m-0 p-3 font-mono text-sm leading-normal overflow-hidden whitespace-pre text-gray-700 dark:text-gray-300 pointer-events-none"
+      >
+        {renderEditableJson(editedData || '')}
+      </pre>
+      <textarea
+        ref={textareaRef}
+        value={editedData}
+        onChange={onChange}
+        onBlur={handleBlur}
+        onScroll={syncEditorScroll}
+        className="relative z-10 w-full h-32 p-3 font-mono text-sm leading-normal bg-transparent text-transparent caret-gray-900 dark:caret-white border-0 focus:ring-0 resize-none whitespace-pre overflow-auto"
+        spellCheck={false}
+        wrap="off"
+        placeholder="Edit JSON here..."
+      />
+    </div>
   )
 
 }
