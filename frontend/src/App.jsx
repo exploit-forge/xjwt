@@ -84,9 +84,9 @@ function App() {
                 </div>
 
                 {/* Main decoder layout - JWT.io style */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                  {/* Left Column - Token Input (60% width) */}
-                  <div className="lg:col-span-3">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column - Token Input */}
+                  <div className="min-w-0">
                     <TokenInput 
                       token={token} 
                       setToken={setToken} 
@@ -94,8 +94,8 @@ function App() {
                     />
                   </div>
 
-                  {/* Right Column - Decoded sections (40% width) */}
-                  <div className="lg:col-span-2 space-y-4">
+                  {/* Right Column - Decoded sections */}
+                  <div className="min-w-0 space-y-4">
                     <DecodedSections token={token} setToken={setToken} />
                   </div>
                 </div>
