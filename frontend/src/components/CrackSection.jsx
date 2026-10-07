@@ -36,11 +36,11 @@ function CrackSection({ token }) {
       
       // Read wordlist file if provided
       if (wordlistFile) {
-        setProgress('📖 Reading wordlist file...')
+        setProgress('Reading wordlist file...')
         wordlistContent = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => resolve(e.target.result)
-          reader.onerror = (e) => reject(new Error('Failed to read wordlist file'))
+          reader.onerror = () => reject(new Error('Failed to read wordlist file'))
           reader.readAsText(wordlistFile)
         })
       }
@@ -51,7 +51,7 @@ function CrackSection({ token }) {
         requestData.wordlist = wordlistContent
       }
 
-      setProgress('🚀 Starting attack...')
+      setProgress('Starting attack...')
 
       // Use POST for both custom and default wordlists
       const response = await fetch(`${API_BASE}/crack`, {
@@ -85,21 +85,21 @@ function CrackSection({ token }) {
               const result = JSON.parse(data.replace('RESULT ', ''))
               setCrackedSecret(result)
               if (usingCustomWordlist) {
-                setProgress('🎉 Secret found with custom wordlist!')
+                setProgress('Secret found with custom wordlist')
               } else {
-                setProgress('🎉 Secret found!')
+                setProgress('Secret found')
               }
               setIsRunning(false)
               return
             } else if (data === 'DONE') {
               if (!crackedSecret) {
-                setProgress('❌ Attack completed - no secret found')
+                setProgress('Attack completed - no secret found')
               }
               setIsRunning(false)
               return
             } else if (data.startsWith('ERROR ')) {
-              setLogs(prev => prev + `❌ ${data.replace('ERROR ', '')}\n`)
-              setProgress('❌ Error occurred')
+              setLogs(prev => prev + `Error: ${data.replace('ERROR ', '')}\n`)
+              setProgress('Error occurred')
               setIsRunning(false)
               return
             } else if (data.trim()) {
@@ -110,21 +110,21 @@ function CrackSection({ token }) {
                 const match = data.match(/Using custom wordlist with (\d+) entries/)
                 if (match) {
                   setUsingCustomWordlist(true)
-                  setProgress(`📁 Using custom wordlist (${match[1]} entries)`)
+                  setProgress(`Using custom wordlist (${match[1]} entries)`)
                 }
               } else if (data.includes('Using default wordlist')) {
                 setUsingCustomWordlist(false)
-                setProgress('📖 Using default wordlist (100000+ secrets)')
+                setProgress('Using default wordlist (100000+ secrets)')
               } else if (data.includes('Testing')) {
                 if (usingCustomWordlist) {
-                  setProgress('🎯 Testing passwords with custom wordlist...')
+                  setProgress('Testing passwords with custom wordlist...')
                 } else {
-                  setProgress('🔍 Testing passwords...')
+                  setProgress('Testing passwords...')
                 }
               } else if (data.includes('Loaded')) {
-                setProgress('📖 Wordlist loaded')
+                setProgress('Wordlist loaded')
               } else if (data.includes('Starting')) {
-                setProgress('🚀 Attack started')
+                setProgress('Attack started')
               }
             }
           }
@@ -132,8 +132,8 @@ function CrackSection({ token }) {
       }
 
     } catch (error) {
-      setProgress('❌ Error occurred')
-      setLogs(prev => prev + `❌ Error: ${error.message}\n`)
+      setProgress('Error occurred')
+      setLogs(prev => prev + `Error: ${error.message}\n`)
       setIsRunning(false)
     }
   }
@@ -144,7 +144,7 @@ function CrackSection({ token }) {
       setEventSource(null)
     }
     setIsRunning(false)
-    setProgress('⏹️ Attack stopped')
+    setProgress('Attack stopped')
     setLogs(prev => prev + '\n=== Attack stopped by user ===\n')
   }
 
@@ -197,10 +197,30 @@ function CrackSection({ token }) {
     }
   }
 
+  const normalizedProgress = progress.trim()
+  const statusLabel = isRunning
+    ? 'Running'
+    : crackedSecret
+      ? 'Success'
+      : normalizedProgress.toLowerCase().includes('error')
+        ? 'Error'
+        : normalizedProgress.toLowerCase().includes('stopped')
+          ? 'Stopped'
+          : normalizedProgress.toLowerCase().includes('completed')
+            ? 'Complete'
+            : 'Idle'
+  const statusTone = isRunning
+    ? 'text-orange-600 dark:text-orange-400'
+    : crackedSecret
+      ? 'text-green-600 dark:text-green-400'
+      : statusLabel === 'Error'
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-gray-600 dark:text-gray-400'
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="workspace-panel overflow-hidden">
       {/* Header */}
-      <div className="bg-gray-50 dark:bg-gray-900 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="workspace-panel-heading px-6 py-4 border-b border-white/5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
@@ -212,7 +232,7 @@ function CrackSection({ token }) {
           </div>
           <div className="text-right">
             <div className="flex items-center justify-end gap-1 text-xs text-gray-500 dark:text-gray-500">
-              <span>Powered by jwt_tool</span>
+              <span>Native HMAC engine</span>
               <a
                 href="https://github.com/ticarpi/jwt_tool"
                 target="_blank"
@@ -238,13 +258,19 @@ function CrackSection({ token }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Wordlist (Optional)
             </label>
-            <div className="relative">
+            <div className="cracker-file-control">
               <input
+                id="jwt-wordlist"
                 type="file"
                 onChange={handleFileChange}
                 accept=".txt,.list,.dic"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 file:cursor-pointer cursor-pointer transition-colors"
+                className="sr-only"
               />
+              <label htmlFor="jwt-wordlist" className="cracker-file-button">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4" /></svg>
+                Choose wordlist
+              </label>
+              <span className="cracker-file-name">{wordlistFile?.name || 'No file selected'}</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Leave empty to use default wordlist with 100000+ common secrets
@@ -256,49 +282,46 @@ function CrackSection({ token }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Attack Status
             </label>
-            <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg">
-              <div className={`text-sm font-medium ${
-                isRunning ? 'text-orange-600 dark:text-orange-400' : 
-                crackedSecret ? 'text-green-600 dark:text-green-400' : 
-                'text-gray-600 dark:text-gray-400'
-              }`}>
-                {isRunning ? 'Running' : crackedSecret ? 'Success' : 'Idle'}
+            <div className="cracker-status-field">
+              <div className="cracker-status-line" title={normalizedProgress || statusLabel}>
+                <span className={`font-medium ${statusTone}`}>{statusLabel}</span>
+                {normalizedProgress && <span className="cracker-status-detail">— {normalizedProgress}</span>}
               </div>
-              {progress && (
-                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  {progress}
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-3">
+        <div className="cracker-controls">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={startCracking}
               disabled={isRunning || !token}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center space-x-2"
+              className="accent-button cracker-control-button disabled:bg-gray-400"
             >
-              <span>{isRunning ? '🔄' : '🚀'}</span>
+              {isRunning ? (
+                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle className="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" /><path className="opacity-90" fill="currentColor" d="M12 3a9 9 0 00-9 9h3a6 6 0 016-6V3z" /></svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" strokeWidth={1.8} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 8.5l5 3.5-5 3.5v-7z" /></svg>
+              )}
               <span>{isRunning ? 'Attacking...' : 'Start Attack'}</span>
             </button>
             
             <button
               onClick={stopCracking}
               disabled={!isRunning}
-              className="px-6 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center space-x-2"
+              className="ghost-button cracker-control-button"
             >
-              <span>⏹️</span>
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" /></svg>
               <span>Stop</span>
             </button>
           </div>
 
           <button
             onClick={clearLogs}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
+            className="ghost-button cracker-control-button"
           >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13M10 11v5m4-5v5" /></svg>
             Clear Logs
           </button>
         </div>
@@ -367,19 +390,6 @@ function CrackSection({ token }) {
           />
         </div>
 
-        {/* Tips */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
-            Tips for Effective JWT Cracking
-          </h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-            <li>• Default wordlist contains 100000+ common JWT secrets</li>
-            <li>• Upload custom wordlists for targeted attacks</li>
-            <li>• Weak secrets like "secret", "key", or "password" are often found quickly</li>
-            <li>• Large wordlists may take considerable time to process</li>
-            <li>• This tool only works with HMAC-signed tokens (HS256, HS384, HS512)</li>
-          </ul>
-        </div>
       </div>
     </div>
   )

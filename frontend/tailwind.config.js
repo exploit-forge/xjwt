@@ -9,7 +9,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', 'Courier New', 'monospace'],
+        mono: ['Roboto Mono', 'SFMono-Regular', 'Monaco', 'Consolas', 'Courier New', 'monospace'],
       },
       colors: {
         'jwt': {

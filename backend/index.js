@@ -5,13 +5,14 @@ const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const WORKER_URL = process.env.WORKER_URL || 'http://jwttool-worker:8000';
 
 // Connected Server-Sent Events clients
 const sseClients = new Set();
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increased limit for large wordlists
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '3mb' }));
+app.use(express.urlencoded({ limit: '3mb', extended: true }));
 
 // Helper to wrap async route handlers
 const asyncHandler = fn => (req, res, next) => {
@@ -54,12 +55,15 @@ const crackHandler = async (req, res) => {
   });
 
   try {
-    const workerRes = await fetch('http://jwttool-worker:8000/crack', {
+    const workerRes = await fetch(`${WORKER_URL}/crack`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, wordlist }),
     });
     const result = await workerRes.json();
+    if (!workerRes.ok) {
+      throw new Error(result.detail || `Security worker returned ${workerRes.status}`);
+    }
     if (result.secret) {
       res.write(`data: RESULT ${JSON.stringify(result)}\n\n`);
     }
@@ -110,7 +114,34 @@ app.post('/crack', [
   }
 });
 
-app.get('/crack', crackHandler);
+const proxyWorkerJson = endpoint => asyncHandler(async (req, res) => {
+  const workerRes = await fetch(`${WORKER_URL}/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req.body),
+  });
+  const result = await workerRes.json();
+  if (!workerRes.ok) {
+    return res.status(workerRes.status).json({ error: result.detail || 'Security worker request failed' });
+  }
+  return res.json(result);
+});
+
+app.post('/security/analyze', [
+  body('token').isString().notEmpty().isLength({ max: 32768 }),
+], (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'A valid JWT is required' });
+  return proxyWorkerJson('analyze')(req, res, next);
+});
+
+app.post('/security/playbook', [
+  body('token').isString().notEmpty().isLength({ max: 32768 }),
+], (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: 'A valid JWT is required' });
+  return proxyWorkerJson('playbook')(req, res, next);
+});
 
 // Endpoint for worker to send log lines
 app.post('/worker/results', (req, res) => {

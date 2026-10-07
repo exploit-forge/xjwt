@@ -319,10 +319,11 @@ const verifyAsymmetric = async (token, publicKey, keyFormat, alg) => {
   return crypto.subtle.verify(getRsaParams(alg), key, sigBytes, data)
 }
 
-function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = true }) {
+function DecodedSection({ title, subtitle, data, onEdit, editable = true }) {
   const [activeTab, setActiveTab] = useState('json')
   const [editedData, setEditedData] = useState('')
   const [copyStatus, setCopyStatus] = useState('')
+  const [isExpanded, setIsExpanded] = useState(false)
   const [isValidJSON, setIsValidJSON] = useState(true)
   const debounceTimerRef = useRef(null)
 
@@ -339,6 +340,23 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!isExpanded) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setIsExpanded(false)
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isExpanded])
 
   // Debounced JSON validation - only for visual feedback, doesn't update parent
   const debouncedValidation = useCallback((value) => {
@@ -384,7 +402,9 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
     if (onEdit && editedData.trim()) {
       try {
         const parsed = JSON.parse(editedData)
-        onEdit(parsed)
+        if (JSON.stringify(parsed) !== JSON.stringify(data)) {
+          onEdit(parsed)
+        }
         setIsValidJSON(true)
       } catch (e) {
         setIsValidJSON(false)
@@ -431,68 +451,92 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header */}
-      <div className={`px-6 py-3 border-b border-gray-200 dark:border-gray-700 ${colorClass}`}>
-        <div className="flex items-center justify-between">
+    <>
+    {isExpanded && (
+      <button
+        type="button"
+        className="workspace-expanded-backdrop"
+        onClick={() => setIsExpanded(false)}
+        aria-label={`Close expanded ${title.toLowerCase()}`}
+      />
+    )}
+    <div
+      className={isExpanded ? 'workspace-expanded' : ''}
+      role={isExpanded ? 'dialog' : undefined}
+      aria-modal={isExpanded ? 'true' : undefined}
+      aria-label={isExpanded ? title : undefined}
+    >
+      <div className="workspace-section-head">
+        <div className="flex w-full items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+            <h3>
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+              <p>
                 {subtitle}
               </p>
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={copyToClipboard}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              title="Copy"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </button>
-            <button
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              title="Expand"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            </button>
-          </div>
         </div>
-        
-        {/* Tabs */}
-        <div className="flex mt-3 -mb-px">
+      </div>
+      <div className="workspace-panel overflow-hidden">
+      <div className="workspace-panel-tabs flex items-center justify-between gap-3 px-3 py-2 border-b border-white/5">
+        <div className="flex gap-1">
           <button
             onClick={() => setActiveTab('json')}
-            className={`px-4 py-1.5 text-xs font-medium border-b-2 transition-colors ${
-              activeTab === 'json' 
-                ? 'text-gray-900 dark:text-white border-gray-900 dark:border-white' 
-                : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white'
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              activeTab === 'json'
+                ? 'workspace-tab-active'
+                : 'text-gray-400 hover:text-white'
             }`}
           >
             JSON
           </button>
           <button
             onClick={() => setActiveTab('claims')}
-            className={`px-4 py-1.5 text-xs font-medium border-b-2 transition-colors ${
-              activeTab === 'claims' 
-                ? 'text-gray-900 dark:text-white border-gray-900 dark:border-white' 
-                : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white'
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              activeTab === 'claims'
+                ? 'workspace-tab-active'
+                : 'text-gray-400 hover:text-white'
             }`}
           >
             CLAIMS TABLE
           </button>
         </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={copyToClipboard}
+              className={`p-1.5 transition-colors ${copyStatus ? 'text-green-500' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}
+              title={copyStatus ? 'Copied' : 'Copy'}
+              aria-label={copyStatus ? 'Copied' : `Copy ${title.toLowerCase()}`}
+              aria-live="polite"
+            >
+              {copyStatus ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12.5l4.2 4.2L19 7" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              title={isExpanded ? 'Collapse' : 'Expand'}
+              aria-label={isExpanded ? `Collapse ${title.toLowerCase()}` : `Expand ${title.toLowerCase()}`}
+              aria-expanded={isExpanded}
+            >
+              {isExpanded ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4m0 5H4m11 0V4m0 5h5M9 15v5m0-5H4m11 0v5m0-5h5" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+              )}
+            </button>
+          </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="workspace-panel-body p-4">
         {activeTab === 'json' ? (
           <div className="relative">
             <JSONWithTimestampTooltips
@@ -519,13 +563,10 @@ function DecodedSection({ title, subtitle, data, colorClass, onEdit, editable = 
             {renderClaimsTable()}
           </div>
         )}
-        {copyStatus && (
-          <div className="absolute top-2 right-2 text-xs text-green-600 dark:text-green-400">
-            {copyStatus}
-          </div>
-        )}
       </div>
     </div>
+    </div>
+    </>
   )
 }
 
@@ -545,8 +586,8 @@ function DecodedSections({ token, setToken }) {
   const [isInternalUpdate, setIsInternalUpdate] = useState(false)
   const [hasBeenModified, setHasBeenModified] = useState(false)
   const [isAutoSigning, setIsAutoSigning] = useState(false)
-  const [showPrivacy, setShowPrivacy] = useState(false)
   const [showModifiedWarning, setShowModifiedWarning] = useState(false)
+  const skipAutoEncodeRef = useRef(false)
 
   const isHmacAlg = algorithm && algorithm.startsWith('HS')
   const isAsymmetricAlg = algorithm && (algorithm.startsWith('RS') || algorithm.startsWith('ES') || algorithm.startsWith('PS'))
@@ -560,6 +601,7 @@ function DecodedSections({ token, setToken }) {
     }
 
     if (!isInternalUpdate) {
+      skipAutoEncodeRef.current = true
       decodeToken()
     }
     setIsInternalUpdate(false) // Reset flag
@@ -573,10 +615,14 @@ function DecodedSections({ token, setToken }) {
 
   // Auto-encode when header or payload changes (from editing)
   useEffect(() => {
-    if (header && payload && setToken) {
+    if (skipAutoEncodeRef.current) {
+      skipAutoEncodeRef.current = false
+      return
+    }
+    if (hasBeenModified && header && payload && setToken) {
       autoEncodeToken()
     }
-  }, [header, payload, algorithm])
+  }, [header, payload, algorithm, hasBeenModified])
 
   // Auto-sign token when secret changes (if we have content and a valid secret)
   useEffect(() => {
@@ -742,6 +788,7 @@ function DecodedSections({ token, setToken }) {
   }
 
   const handleHeaderEdit = (newHeader) => {
+    setHasBeenModified(true)
     setHeader(newHeader)
     if (newHeader && newHeader.alg) {
       setAlgorithm(newHeader.alg)
@@ -749,6 +796,7 @@ function DecodedSections({ token, setToken }) {
   }
 
   const handlePayloadEdit = (newPayload) => {
+    setHasBeenModified(true)
     setPayload(newPayload)
   }
 
@@ -801,7 +849,6 @@ function DecodedSections({ token, setToken }) {
         title="DECODED HEADER"
         subtitle="ALGORITHM & TOKEN TYPE"
         data={header}
-        colorClass="bg-gray-50 dark:bg-gray-700"
         onEdit={handleHeaderEdit}
       />
 
@@ -810,13 +857,12 @@ function DecodedSections({ token, setToken }) {
         title="DECODED PAYLOAD"
         subtitle="DATA"
         data={payload}
-        colorClass="bg-gray-50 dark:bg-gray-700"
         onEdit={handlePayloadEdit}
       />
 
       {/* Verify Signature Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="workspace-panel overflow-hidden">
+        <div className="workspace-panel-heading px-6 py-3 border-b border-white/5">
           <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
             JWT SIGNATURE VERIFICATION
           </h3>
@@ -984,44 +1030,17 @@ function DecodedSections({ token, setToken }) {
                 isVerifying ||
                 (isHmacAlg ? !secret : isAsymmetricAlg ? !publicKey : true)
               }
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed text-sm"
+              className="accent-button px-4 py-2 disabled:bg-gray-400 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed text-sm"
             >
               {isVerifying ? 'Verifying...' : 'Verify Signature'}
             </button>
             <button
               onClick={encodeToken}
               disabled={!header || !payload}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed text-sm"
+              className="accent-button px-4 py-2 disabled:bg-gray-400 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed text-sm"
             >
               Generate Token
             </button>
-          </div>
-
-          {/* Privacy Notice */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setShowPrivacy((v) => !v)}
-              className="w-full px-3 py-2 flex items-center justify-between text-sm font-medium text-blue-800 dark:text-blue-200"
-            >
-              <span className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span>Privacy Protected & Real-time Auto-Signing</span>
-              </span>
-              <svg className={`w-4 h-4 transform transition-transform ${showPrivacy ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {showPrivacy && (
-              <div className="px-3 pb-3 text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <p>• JWT decoding happens in your browser - tokens never leave your device</p>
-                <p>• <strong>Auto-signing</strong>: When you enter a secret, the token is automatically re-signed</p>
-                <p>• <strong>Live editing</strong>: Changes to header/payload automatically update the encoded token</p>
-                <p>• Asymmetric signing and verification run locally with your provided keys</p>
-              </div>
-            )}
           </div>
 
           {/* Verification Result */}

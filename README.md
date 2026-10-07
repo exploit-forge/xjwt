@@ -89,6 +89,10 @@ That's it! The application will be running with all services configured.
 
 ### Security Testing
 
+The Advanced Security page provides offline JWT analysis and bounded probe generation. It does not send tokens or requests to target systems.
+
+Dictionary cracking for HS256, HS384, and HS512 is handled by the native worker without `jwt_tool`. Custom wordlists are limited to 2 MB and the engine tests at most 1,000,000 candidates per request.
+
 1. **Crack JWT Secrets**
    - Navigate to "JWT Security Testing"
    - Paste the target JWT token

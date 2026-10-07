@@ -1,10 +1,9 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="6" fill="url(#gradient)"/>
-  <text x="16" y="22" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="white">JWT</text>
-  <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+<svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#FF6A00">
+    <path d="M19.8 4.6A30 30 0 0 1 44.2 4.6L42 9.6A24.5 24.5 0 0 0 22 9.6Z"/>
+    <path d="M19.8 4.6A30 30 0 0 1 44.2 4.6L42 9.6A24.5 24.5 0 0 0 22 9.6Z" transform="rotate(90 32 32)"/>
+    <path d="M19.8 4.6A30 30 0 0 1 44.2 4.6L42 9.6A24.5 24.5 0 0 0 22 9.6Z" transform="rotate(180 32 32)"/>
+    <path d="M19.8 4.6A30 30 0 0 1 44.2 4.6L42 9.6A24.5 24.5 0 0 0 22 9.6Z" transform="rotate(270 32 32)"/>
+  </g>
+  <path d="M20 20L44 44M44 20L20 44" stroke="#FF6A00" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

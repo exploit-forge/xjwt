@@ -1,95 +1,42 @@
 import { useEffect, useState } from 'react'
 
+const levels = [
+  [90, 'Excellent', '#34d399'],
+  [70, 'Good', '#60a5fa'],
+  [50, 'Fair', '#fbbf24'],
+  [30, 'Poor', '#fb923c'],
+  [0, 'Critical', '#fb7185'],
+]
+
 const SecurityGauge = ({ score }) => {
   const [animatedScore, setAnimatedScore] = useState(0)
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedScore(score)
-    }, 100)
+    const timer = setTimeout(() => setAnimatedScore(score), 100)
     return () => clearTimeout(timer)
   }, [score])
 
-  const getSecurityLevel = (score) => {
-    if (score >= 90) return { level: 'Excellent', color: 'text-green-600 dark:text-green-400' }
-    if (score >= 70) return { level: 'Good', color: 'text-blue-600 dark:text-blue-400' }
-    if (score >= 50) return { level: 'Fair', color: 'text-yellow-600 dark:text-yellow-400' }
-    if (score >= 30) return { level: 'Poor', color: 'text-orange-600 dark:text-orange-400' }
-    return { level: 'Critical', color: 'text-red-600 dark:text-red-400' }
-  }
-
-  const { level, color } = getSecurityLevel(score)
-  
-  // Calculate the path for the arc (green gauge)
-  const radius = 90
-  const strokeWidth = 12
-  const normalizedRadius = radius - strokeWidth / 2
-  const circumference = normalizedRadius * Math.PI // Half circle
-  
-  // Convert score to angle (180 degrees max for half circle)
-  const angle = (animatedScore / 100) * 180
-  const strokeDasharray = `${(angle / 180) * circumference} ${circumference}`
+  const [, level, color] = levels.find(([minimum]) => score >= minimum)
+  const circumference = 84 * Math.PI
+  const progress = (animatedScore / 100) * circumference
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 text-center">
-        Security Level
-      </h3>
-      
-      <div className="flex flex-col items-center">
-        {/* SVG Gauge */}
-        <div className="relative">
-          <svg width="200" height="120" className="transform rotate-0">
-            {/* Background arc */}
-            <path
-              d={`M 20 100 A ${normalizedRadius} ${normalizedRadius} 0 0 1 180 100`}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={strokeWidth}
-              className="text-gray-200 dark:text-gray-700"
-            />
-            
-            {/* Progress arc */}
-            <path
-              d={`M 20 100 A ${normalizedRadius} ${normalizedRadius} 0 0 1 180 100`}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={strokeWidth}
-              strokeDasharray={strokeDasharray}
-              strokeLinecap="round"
-              className="text-green-500 dark:text-green-400 transition-all duration-1000 ease-out"
-              style={{
-                transformOrigin: '100px 100px',
-              }}
-            />
-          </svg>
-          
-          {/* Score display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center pt-12">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">
-              {Math.round(animatedScore)}%
-            </div>
-            <div className={`text-sm font-medium ${color}`}>
-              {level}
-            </div>
-          </div>
+    <section className="scanner-score-card" style={{ '--gauge-color': color }}>
+      <div className="scanner-score-heading">
+        <div className="scanner-score-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.7 7 10 4.1-1.3 7-5.4 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></svg>
         </div>
-
-        {/* Scale markers */}
-        <div className="flex justify-between w-full max-w-[160px] mt-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>0%</span>
-          <span>50%</span>
-          <span>100%</span>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Overall security posture of the JWT implementation
-          </p>
-        </div>
+        <div><span>SECURITY SCORE</span><h3>Security posture</h3></div>
       </div>
-    </div>
+      <div className="scanner-gauge">
+        <svg viewBox="0 0 200 112" aria-hidden="true">
+          <path className="scanner-gauge-track" d="M16 96a84 84 0 0 1 168 0" pathLength="264" />
+          <path className="scanner-gauge-progress" d="M16 96a84 84 0 0 1 168 0" strokeDasharray={`${progress} ${circumference}`} />
+        </svg>
+        <div className="scanner-gauge-value"><strong>{Math.round(animatedScore)}%</strong><span>{level}</span></div>
+      </div>
+      <div className="scanner-gauge-scale"><span>0</span><span>50</span><span>100</span></div>
+      <p>Overall resilience of the token configuration.</p>
+    </section>
   )
 }
 

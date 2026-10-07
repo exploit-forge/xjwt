@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification, LibrariesPage, ScannerPage } from './components'
+import { Header, TokenInput, DecodedSections, CrackSection, PromoNotification, LibrariesPage, ScannerPage, AdvancedSecurity, PrivacyFeatures, CrackingTips } from './components'
 import './App.css'
 
 function App() {
@@ -16,80 +16,52 @@ function App() {
     }
   }, [theme])
 
-  const handleTokenChange = (newToken) => {
+  const handleTokenChange = () => {
     // This can be used for any additional logic when token changes
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="app-shell min-h-screen flex flex-col transition-colors">
       <Header theme={theme} setTheme={setTheme} currentView={currentView} setCurrentView={setCurrentView} />
       <PromoNotification />
       
-      {/* Secondary Navigation Tabs */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex">
-            <button
-              onClick={() => setCurrentView('decoder')}
-              className={`py-3 px-6 border-b-3 font-medium text-sm transition-colors ${
-                currentView === 'decoder'
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              JWT Decoder/Encoder
-            </button>
-            <button
-              onClick={() => setCurrentView('crack')}
-              className={`py-3 px-6 border-b-3 font-medium text-sm transition-colors ${
-                currentView === 'crack'
-                  ? 'border-red-600 text-red-600 dark:text-red-400 dark:border-red-400'
-                  : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              JWT Cracker
-            </button>
-            <button
-              onClick={() => setCurrentView('scanner')}
-              className={`py-3 px-6 border-b-3 font-medium text-sm transition-colors ${
-                currentView === 'scanner'
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400 dark:border-purple-400'
-                  : 'border-transparent text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              JWT Scanner
-            </button>
-          </nav>
-        </div>
-      </div>
-
       <main className="flex-1 w-full">
         {currentView === 'libraries' ? (
           <LibrariesPage />
         ) : currentView === 'scanner' ? (
           <ScannerPage token={token} setToken={setToken} />
+        ) : currentView === 'advanced' ? (
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <AdvancedSecurity token={token} setToken={setToken} />
+          </div>
         ) : (
           <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {currentView === 'decoder' ? (
               <>
                 {/* JWT.io style intro */}
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    JWT Decoder &amp; Encoder
+                <div className="page-hero text-center mb-14 pt-8">
+                  <h1 className="mb-5 text-gray-900 dark:text-white">
+                    JSON Web Token<br className="hidden sm:block" /> Decoder &amp; Encoder
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                    Decode, inspect, and re-encode JSON Web Tokens in real time. View headers and payloads as you type,
-                    validate signatures with your own secret, and generate updated tokens to test your integrations.
+                  <p className="text-base leading-relaxed">
+                    Decode, inspect, verify, edit, and re-sign JSON Web Tokens in one synchronized workspace.
                   </p>
                 </div>
 
-                {/* Main decoder layout - JWT.io style */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="workspace-intro mb-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Paste a JWT to decode, validate, edit, and verify.</p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Edits to header or payload update the encoded token in real time.</p>
+                  </div>
+                  <span className="workspace-badge"><span className="workspace-badge-dot" /> Local-first editing</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-7 items-stretch">
                   {/* Left Column - Token Input */}
-                  <div className="min-w-0">
-                    <TokenInput 
-                      token={token} 
-                      setToken={setToken} 
+                  <div className="min-w-0 h-full">
+                    <TokenInput
+                      token={token}
+                      setToken={setToken}
                       onTokenChange={handleTokenChange}
                     />
                   </div>
@@ -99,44 +71,59 @@ function App() {
                     <DecodedSections token={token} setToken={setToken} />
                   </div>
                 </div>
+                <PrivacyFeatures />
               </>
             ) : currentView === 'crack' ? (
               <>
                 {/* Crack section intro */}
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <div className="page-hero text-center mb-12 pt-8">
+                  <h1 className="mb-5 text-gray-900 dark:text-white">
                     JWT Cracker
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-                    Test the security of JWT implementations by attempting to crack weak secrets using dictionary attacks.
+                  <p className="text-base leading-relaxed">
+                    Test the security of JWT implementations by attempting to recover weak signing secrets with a dictionary attack.
                   </p>
                 </div>
 
+                <div className="workspace-intro mb-6">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Paste a signed HS* token to audit its secret.</p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">Only the signature is tested — header and payload are never modified.</p>
+                  </div>
+                  <span className="workspace-badge"><span className="workspace-badge-dot" /> Nothing retained</span>
+                </div>
+
                 {/* Token input for cracking */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                  <TokenInput 
-                    token={token} 
-                    setToken={setToken} 
-                    onTokenChange={handleTokenChange}
-                  />
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Security Testing Guidelines
-                    </h3>
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <p className="font-medium text-amber-600 dark:text-amber-400">
-                        Only test JWTs that you own or have explicit permission to test.
-                      </p>
-                      <p>
-                        This tool attempts to crack JWT secrets using common passwords and dictionary attacks.
-                      </p>
-                      <p>
-                        Use strong, randomly generated secrets (at least 256 bits) for production systems.
-                      </p>
-                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <p className="text-green-700 dark:text-green-300 text-sm font-medium">
-                           Privacy Protected: We do not store or log your JWT, secrets, or wordlists. Data is processed on our servers temporarily and automatically deleted after use. No sensitive information is retained long-term.
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start mb-8">
+                  <div className="min-w-0">
+                    <TokenInput
+                      token={token}
+                      setToken={setToken}
+                      onTokenChange={handleTokenChange}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="workspace-section-head">
+                      <div>
+                        <h2>Security Testing Guidelines</h2>
+                        <p>Before you run an attack</p>
+                      </div>
+                    </div>
+                    <div className="workspace-card p-6">
+                      <div className="space-y-3 text-sm text-gray-400">
+                        <p className="font-medium text-amber-400">
+                          Only test JWTs that you own or have explicit permission to test.
                         </p>
+                        <p>
+                          This tool attempts to recover JWT secrets using common passwords and dictionary attacks.
+                        </p>
+                        <p>
+                          Use strong, randomly generated secrets (at least 256 bits) for production systems.
+                        </p>
+                      </div>
+                      <div className="workspace-callout workspace-callout-ok mt-5">
+                        <strong className="font-semibold text-gray-200">Privacy protected.</strong> We do not store or log your JWT,
+                        secrets, or wordlists. Data is processed on our servers temporarily and deleted automatically after use.
                       </div>
                     </div>
                   </div>
@@ -144,6 +131,7 @@ function App() {
 
                 {/* Crack section */}
                 <CrackSection token={token} />
+                <CrackingTips />
               </>
             ) : null}
           </div>
@@ -151,36 +139,35 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <footer className="app-footer mt-auto border-t">
+        <div className="max-w-8xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Company info */}
             <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
-              <span className="text-sm text-gray-700 dark:text-gray-300">Developed by Exploit-Forge LTD</span>
-              <a 
-                href="https://exploit-forge.com/" 
-                target="_blank" 
+              <a
+                href="https://www.exploit-forge.com/"
+                target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center hover:opacity-80 transition-opacity"
-                title="Visit Exploit-forge"
+                className="inline-flex items-center transition-opacity hover:opacity-80"
+                title="Visit Exploit Forge"
               >
-                <img 
-                  src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjQ1IiB2aWV3Qm94PSIwIDAgNDAwIDEyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFNoaWVsZCBTaGFwZSAtLT4KICA8cGF0aCBkPSJNNTUgMTBMMTAwIDI1VjY1QzEwMCA4NSA3NSAxMDUgNTUgMTEwQzM1IDEwNSAxMCA4NSAxMCA2NVYyNUw1NSAxMFoiIGZpbGw9IiMzNDQ1NjMiIHN0cm9rZT0iIzFGMjkzNyIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgCiAgPCEtLSBDb2RlIEJyYWNrZXRzIC0tPgogIDxwYXRoIGQ9Ik0zNSA0MEwyNSA2MEwzNSA4MCIgc3Ryb2tlPSIjRjU5NzMzIiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik03NSA0MEw4NSA2MEw3NSA4MCIgc3Ryb2tlPSIjRjU5NzMzIiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI0NSIgeTE9IjM1IiB4Mj0iNjUiIHkyPSI4NSIgc3Ryb2tlPSIjRjU5NzMzIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgoKICA8IS0tIEVYUExPSVQgVGV4dCAtLT4KICA8dGV4dCB4PSIxMzAiIHk9IjQ1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMzNDQ1NjMiPkVYUExPSVQ8L3RleHQ+CiAgPCEtLSBGT1JHRSBUZXh0IC0tPgogIDx0ZXh0IHg9IjEzMCIgeT0iODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI0Y1OTczMyI+Rk9SR0U8L3RleHQ+Cjwvc3ZnPgo=" 
-                  alt="Exploit-forge" 
-                  className="h-10 w-auto sm:h-8"
+                <img
+                  src={`https://www.exploit-forge.com/assets/exploitforgelogo-${theme === 'dark' ? 'dark' : 'light'}.png`}
+                  alt="Exploit Forge"
+                  className="h-16 w-auto object-contain sm:h-20"
                 />
               </a>
             </div>
             
             {/* Social media icons */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">Follow us on:</span>
+              <span className="footer-follow-label mr-2 text-sm">Follow us on:</span>
               {/* LinkedIn */}
               <a
                 href="https://linkedin.com/company/exploit-forge"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="text-gray-500 transition-colors hover:text-white"
                 title="Follow us on LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -193,7 +180,7 @@ function App() {
                 href="https://twitter.com/ExploitforgeLTD"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                className="text-gray-500 transition-colors hover:text-white"
                 title="Follow us on Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -206,7 +193,7 @@ function App() {
                 href="#"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                className="text-gray-500 transition-colors hover:text-white"
                 title="Follow us on Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -219,7 +206,7 @@ function App() {
                 href="https://github.com/exploit-forge"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="text-gray-500 transition-colors hover:text-white"
                 title="Visit our GitHub"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
