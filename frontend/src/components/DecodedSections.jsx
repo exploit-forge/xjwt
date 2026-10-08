@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import TimestampCell from './TimestampCell'
+import { Fragment, useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react'
 import JSONWithTimestampTooltips from './JSONWithTimestampTooltips'
 
 const base64UrlEncode = (str) =>
@@ -319,15 +318,37 @@ const verifyAsymmetric = async (token, publicKey, keyFormat, alg) => {
   return crypto.subtle.verify(getRsaParams(alg), key, sigBytes, data)
 }
 
+const CLAIM_DETAILS = {
+  iss: { description: 'The issuer that created and signed the JWT.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1' },
+  sub: { description: 'The principal that is the subject of the JWT.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.2' },
+  aud: { description: 'The recipients for which the JWT is intended.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3' },
+  exp: { description: 'The expiration time on or after which the JWT must not be accepted.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4', numericDate: true },
+  nbf: { description: 'The time before which the JWT must not be accepted for processing.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5', numericDate: true },
+  iat: { description: 'The time at which the JWT was issued.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6', numericDate: true },
+  jti: { description: 'A unique identifier for the JWT, commonly used for replay prevention.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.7' },
+  typ: { description: 'The media type of the complete JWT.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-5.1' },
+  cty: { description: 'The content type of the JWT payload, especially for nested JWTs.', href: 'https://www.rfc-editor.org/rfc/rfc7519#section-5.2' },
+  alg: { description: 'The cryptographic algorithm used to secure the JWT.', href: 'https://www.rfc-editor.org/rfc/rfc7515#section-4.1.1' },
+  kid: { description: 'A hint identifying the key used to secure the JWT.', href: 'https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4' },
+  nonce: { description: 'A value used to associate the token with a client session and mitigate replay.', href: 'https://openid.net/specs/openid-connect-core-1_0.html#IDToken' },
+  auth_time: { description: 'The time at which the user authentication occurred.', href: 'https://openid.net/specs/openid-connect-core-1_0.html#IDToken', numericDate: true },
+  azp: { description: 'The authorized party to which the token was issued.', href: 'https://openid.net/specs/openid-connect-core-1_0.html#IDToken' },
+  scope: { description: 'The permissions or access scopes granted by the token.', href: 'https://www.rfc-editor.org/rfc/rfc8693#section-4.2' },
+  sid: { description: 'An identifier for the authenticated user session.', href: 'https://openid.net/specs/openid-connect-backchannel-1_0.html#Backchannel' },
+}
+
+const NUMERIC_DATE_URL = 'https://www.rfc-editor.org/rfc/rfc7519#section-2'
+
 function DecodedSection({ title, subtitle, data, onEdit, editable = true }) {
   const [activeTab, setActiveTab] = useState('json')
   const [editedData, setEditedData] = useState('')
   const [copyStatus, setCopyStatus] = useState('')
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showClaimDetails, setShowClaimDetails] = useState(true)
   const [isValidJSON, setIsValidJSON] = useState(true)
   const debounceTimerRef = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setEditedData(data ? JSON.stringify(data, null, 2) : '')
     setIsValidJSON(true)
   }, [data])
@@ -423,27 +444,47 @@ function DecodedSection({ title, subtitle, data, onEdit, editable = true }) {
   const renderClaimsTable = () => {
     if (!data || typeof data !== 'object') return null
 
-    // Define timestamp fields that should use TimestampCell
     const timestampFields = ['iat', 'exp', 'nbf', 'eat', 'auth_time', 'updated_at', 'created_at', 'refresh_token_expires_at']
 
+    const renderClaimValue = (key, value) => {
+      if (timestampFields.includes(key) && Number.isFinite(Number(value))) {
+        return (
+          <span className="claims-value-timestamp">
+            <span>{String(value)}</span>
+            <time dateTime={new Date(Number(value) * 1000).toISOString()}>{new Date(Number(value) * 1000).toString()}</time>
+          </span>
+        )
+      }
+      return typeof value === 'object' ? JSON.stringify(value) : String(value)
+    }
+
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="claims-breakdown-wrap">
+        <table className={`claims-breakdown-table ${showClaimDetails ? 'claims-details-visible' : ''}`}>
           <tbody>
-            {Object.entries(data).map(([key, value]) => (
-              <tr key={key} className="border-b border-gray-200 dark:border-gray-700">
-                <td className="py-2 pr-4 font-mono text-purple-600 dark:text-purple-400">{key}</td>
-                <td className="py-2">
-                  {timestampFields.includes(key) ? (
-                    <TimestampCell value={value} fieldName={key} />
-                  ) : (
-                    <span className="font-mono text-gray-700 dark:text-gray-300">
-                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                    </span>
+            {Object.entries(data).map(([key, value]) => {
+              const details = CLAIM_DETAILS[key]
+              return (
+                <Fragment key={key}>
+                  <tr>
+                    <th scope="row">{key}</th>
+                    <td><code>{renderClaimValue(key, value)}</code></td>
+                    {showClaimDetails && (
+                      <td className="claims-description">
+                        {details ? <>{details.description} <a href={details.href} target="_blank" rel="noopener noreferrer">Learn more</a></> : <span>Custom or application-specific claim.</span>}
+                      </td>
+                    )}
+                  </tr>
+                  {details?.numericDate && (
+                    <tr className="claims-guidance-row">
+                      <td colSpan={showClaimDetails ? 3 : 2}>
+                        This value must be a <a href={NUMERIC_DATE_URL} target="_blank" rel="noopener noreferrer">NumericDate</a>, representing seconds since the Unix epoch.
+                      </td>
+                    </tr>
                   )}
-                </td>
-              </tr>
-            ))}
+                </Fragment>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -488,7 +529,7 @@ function DecodedSection({ title, subtitle, data, onEdit, editable = true }) {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === 'json'
                 ? 'workspace-tab-active'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
             }`}
           >
             JSON
@@ -498,13 +539,29 @@ function DecodedSection({ title, subtitle, data, onEdit, editable = true }) {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               activeTab === 'claims'
                 ? 'workspace-tab-active'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
             }`}
           >
-            CLAIMS TABLE
+            CLAIMS BREAKDOWN
           </button>
         </div>
           <div className="flex items-center space-x-2">
+            {activeTab === 'claims' && (
+              <button
+                type="button"
+                onClick={() => setShowClaimDetails((visible) => !visible)}
+                className="workspace-icon-button"
+                title={showClaimDetails ? 'Hide claim descriptions' : 'Show claim descriptions'}
+                aria-label={showClaimDetails ? 'Hide claim descriptions' : 'Show claim descriptions'}
+                aria-pressed={showClaimDetails}
+              >
+                {showClaimDetails ? (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m3 3 18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.1 2.7M6.3 6.3C3.9 8 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.3-.6M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>
+                )}
+              </button>
+            )}
             <button
               onClick={copyToClipboard}
               className={`p-1.5 transition-colors ${copyStatus ? 'text-green-500' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`}

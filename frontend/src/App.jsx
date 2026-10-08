@@ -110,8 +110,8 @@ function App() {
                       </div>
                     </div>
                     <div className="workspace-card p-6">
-                      <div className="space-y-3 text-sm text-gray-400">
-                        <p className="font-medium text-amber-400">
+                      <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                        <p className="font-medium text-amber-600 dark:text-amber-400">
                           Only test JWTs that you own or have explicit permission to test.
                         </p>
                         <p>
@@ -122,7 +122,7 @@ function App() {
                         </p>
                       </div>
                       <div className="workspace-callout workspace-callout-ok mt-5">
-                        <strong className="font-semibold text-gray-200">Privacy protected.</strong> We do not store or log your JWT,
+                        <strong className="font-semibold text-gray-900 dark:text-gray-200">Privacy protected.</strong> We do not store or log your JWT,
                         secrets, or wordlists. Data is processed on our servers temporarily and deleted automatically after use.
                       </div>
                     </div>
@@ -167,7 +167,7 @@ function App() {
                 href="https://linkedin.com/company/exploit-forge"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 transition-colors hover:text-white"
+                className="text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
                 title="Follow us on LinkedIn"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ function App() {
                 href="https://twitter.com/ExploitforgeLTD"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 transition-colors hover:text-white"
+                className="text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
                 title="Follow us on Twitter"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -193,7 +193,7 @@ function App() {
                 href="#"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 transition-colors hover:text-white"
+                className="text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
                 title="Follow us on Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -206,7 +206,7 @@ function App() {
                 href="https://github.com/exploit-forge"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 transition-colors hover:text-white"
+                className="text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-white"
                 title="Visit our GitHub"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

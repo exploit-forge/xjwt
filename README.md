@@ -1,158 +1,159 @@
-# 🔐 JWT Security Checker
+# xJWT — JWT Security Checker
 
-> A comprehensive web-based platform for JSON Web Token security testing and analysis
+xJWT is a browser-based workspace for decoding, editing, signing, verifying, scanning, and testing JSON Web Tokens. It combines local JWT tooling with an optional backend security worker for dictionary cracking, probe generation, and explicitly authorized endpoint tests.
 
-**Built by [Al-Amir Badmus](https://github.com/Commando-X) for [Exploit-forge LTD](https://exploit-forge.com)**
+> Use xJWT only with tokens and systems you own or have explicit permission to test.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green.svg)](https://github.com/features/actions)
+## Features
 
-JWT Security Checker is a professional-grade security testing platform designed for penetration testers, security researchers, and developers to analyze and test JSON Web Token implementations. Built with modern web technologies and powered by industry-standard tools.
+### Decoder and editor
 
-## ✨ Features
+- Decode JWT headers and payloads in real time.
+- Edit JSON and regenerate the encoded token.
+- Inspect claims in JSON or a detailed claims breakdown.
+- Show human-readable values for NumericDate claims such as `iat`, `nbf`, and `exp`.
+- Copy tokens and decoded data with visual confirmation.
+- Sign and verify HMAC tokens with HS256, HS384, and HS512.
+- Sign and verify RSA, RSA-PSS, and ECDSA tokens with supported browser Web Crypto key formats.
+- Use light or dark mode on desktop and mobile layouts.
 
-### 🔍 **JWT Analysis & Manipulation**
-- **Real-time JWT Decoder/Encoder** - Decode, edit, and encode JWTs with live preview
-- **Client-side Processing** - All decoding/encoding happens in the browser; tokens stay on your device
-- **Signature Verification** - Verify token signatures with custom secrets
-- **Algorithm Support** - Full symmetric (HS256/384/512) and asymmetric (RS256/384/512, ES256/384/512) support, plus none
-- **Claims Editor** - Interactive JSON and table view for easy claims modification
+Decoder, editor, signing, and verification operations run in the browser. Tokens and keys used there are not persisted by xJWT.
 
-### ⚡ **Security Testing Tools**
-- **JWT Secret Cracking** - Brute-force weak secrets using dictionary attacks
-- **100,000+ Default Wordlist** - Comprehensive built-in wordlist for common secrets
-- **Custom Wordlist Support** - Upload your own wordlists (up to 2MB)
-- **Real-time Progress** - Live attack logs and progress monitoring
-- **Algorithm Confusion Testing** - Test for algorithm switching vulnerabilities
+### Security scanner
 
-### 🛠 **Pentesting Tool Collection**
-- **JWTTool Integration** - Powered by the renowned jwt_tool by @ticarpi
-- **Burp Suite Extensions** - JWT Editor, Hackvertor, JWT4B integration guides
-- **Hashcat Support** - GPU-accelerated cracking capabilities
-- **Multiple Cracking Tools** - Comprehensive toolkit for various attack vectors
+- Check algorithms, signatures, key-selection headers, timestamps, token size, and claim hygiene.
+- Detect potentially sensitive claims and suspicious JWT header values.
+- Attempt a bounded weak-secret check for HMAC tokens.
+- Present severity-ranked findings, remediation guidance, security posture, and exposure scores.
 
-### 🎨 **Modern User Interface**
-- **JWT.io-inspired Design** - Familiar interface for security professionals
-- **Dark/Light Theme** - Comfortable viewing in any environment
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
-- **Real-time Updates** - Live feedback during security testing operations
+Scanner secret checks call the backend worker. They are not browser-only operations.
 
-### 🛡️ **JWT Scanner**
-- **Automated JWT Vulnerability Scanner** - Scan tokens for common vulnerabilities (none algorithm, weak secrets, insecure claims, etc.)
-- **Detailed Security Reports** - Get actionable insights and recommendations
-- **One-Click Scan** - Instantly analyze any JWT for security issues
+### HMAC secret cracker
 
-## 🚀 Quick Start
+- Dictionary-test HS256, HS384, and HS512 signatures with the native Python worker.
+- Use the bundled wordlist of more than 100,000 common candidates.
+- Upload custom plain-text wordlists in `.txt`, `.list`, or `.dic` format.
+- Enforce a 2 MB custom-wordlist limit and a maximum of 1,000,000 candidates per request.
+- Stream attack status and return a recovered secret when a candidate matches.
 
-### Prerequisites
-- Docker & Docker Compose
+Custom wordlists are read as one candidate per line. xJWT does not depend on `jwt_tool` for cracking.
+
+### Advanced testing
+
+- Generate a bounded offline playbook of unsigned and claim-validation probe tokens without contacting a target.
+- Optionally run the original token and generated probes against an authorized HTTP(S) endpoint.
+- Send GET or POST requests with JSON or form-encoded bodies.
+- Deliver tokens through `Authorization: Bearer`, common query parameters, or a custom query parameter.
+- Add up to ten custom request headers; transport-controlled headers cannot be overridden.
+- View response status, timing, and pass/fail results, and copy the exact token used for each test.
+
+Live testing occurs only after the user provides a target, confirms authorization, and starts the test. Redirects are not followed, requests time out after five seconds, and private/internal destinations are blocked by default. Set `LIVE_TEST_ALLOW_PRIVATE_TARGETS=true` on the backend only when an authorized local testing environment requires it.
+
+### Reference library
+
+The Libraries page contains links and usage notes for third-party JWT and web-security tools. These are references, not bundled integrations or dependencies of xJWT.
+
+## Privacy and data handling
+
+- xJWT has no database and does not intentionally persist JWTs, keys, wordlists, request bodies, or target responses.
+- Decoder, editor, signing, and verification data remains in the browser.
+- Cracking, playbook generation, scanner secret checks, and live tests send the required input to the xJWT backend and worker for in-memory processing.
+- Live target responses are classified by status code; response bodies are not stored or returned by the live-test API.
+- Results remain in the current browser page until replaced or the page is reloaded.
+
+Do not submit production secrets to an xJWT deployment you do not control or trust.
+
+## Quick start with Docker
+
+### Requirements
+
+- Docker
+- Docker Compose
 - Git
 
-### Installation
+```bash
+git clone https://github.com/exploit-forge/xjwt.git
+cd xjwt
+docker compose up --build
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/exploit-forge/xjwt.git
-   cd xjwt
-   ```
+Open:
 
-2. **Start with Docker Compose**
-   ```bash
-   docker-compose up -d
-   ```
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:8000](http://localhost:8000)
 
-3. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
+The Compose stack starts the React frontend, Express API, and Python security worker.
 
-That's it! The application will be running with all services configured.
+## Local development
 
-## 📖 Usage Guide
+Run the three services separately.
 
-### Basic JWT Operations
+### Security worker
 
-1. **Decode a JWT**
-   - Paste your JWT token in the input field
-   - View decoded header and payload in real-time
-   - Switch between JSON and table view
+```bash
+cd worker
+python3 -m pip install -r requirements.txt
+XJWT_WORDLIST_PATH=../backend/jwt/common_secrets.txt \
+BACKEND_URL=http://127.0.0.1:8012 \
+uvicorn worker:app --host 127.0.0.1 --port 8001
+```
 
-2. **Verify Signature**
-   - Enter the secret key used to sign the JWT
-   - Select the appropriate algorithm
-   - Click "Verify Signature" to check validity
+### Backend
 
-3. **Generate New Token**
-   - Edit header and payload as needed
-   - Provide a secret key
-   - Click "Generate Token" to create a new JWT
+```bash
+cd backend
+npm install
+PORT=8012 WORKER_URL=http://127.0.0.1:8001 node index.js
+```
 
-### Security Testing
+### Frontend
 
-The Advanced Security page provides offline JWT analysis and bounded probe generation. It does not send tokens or requests to target systems.
+```bash
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+```
 
-Dictionary cracking for HS256, HS384, and HS512 is handled by the native worker without `jwt_tool`. Custom wordlists are limited to 2 MB and the engine tests at most 1,000,000 candidates per request.
+Vite proxies `/api` to `http://127.0.0.1:8012` by default. Set `VITE_BACKEND_URL` when the API is hosted elsewhere.
 
-1. **Crack JWT Secrets**
-   - Navigate to "JWT Security Testing"
-   - Paste the target JWT token
-   - Optional: Upload custom wordlist
-   - Click "Start Attack" and monitor progress
+## Testing
 
-2. **Scan JWT for Vulnerabilities**
-   - Go to the "JWT Scanner" section
-   - Paste or upload your JWT token
-   - Click "Scan Token"
-   - Review the detailed security report and recommendations
+```bash
+cd frontend
+npm test -- --run
+npm run build
 
+cd ../backend
+npm test -- --runInBand
 
-## 🛡️ Security Features
+cd ../worker
+python3 -m unittest test_security_engine.py
+```
 
-### Privacy Protection
-- ✅ No permanent data storage
-- ✅ Automatic cleanup of temporary files
-- ✅ Server-side processing with immediate deletion
-- ✅ No long-term retention of sensitive information
-- ✅ Decode/encode operations run entirely in the frontend, keeping tokens local to your browser
+## Architecture
 
-## 🤝 Contributing
+- `frontend/` — React 19, Vite, Tailwind CSS, and browser Web Crypto.
+- `backend/` — Express API, validation, live-test request controls, and server-sent events.
+- `worker/` — FastAPI security engine for HMAC cracking, static analysis, and probe generation.
+- `backend/jwt/common_secrets.txt` — bundled common-secret wordlist.
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## Security boundaries
 
-### Development Workflow
+- Live endpoint testing accepts only HTTP(S) URLs without embedded credentials or fragments.
+- DNS results are checked and pinned for each live test to reduce SSRF and DNS-rebinding risk.
+- Loopback, private, link-local, multicast, and other internal addresses are blocked by default.
+- Live tests do not follow redirects.
+- User-supplied `Authorization`, `Host`, `Content-Type`, `Content-Length`, connection, proxy, transfer, and upgrade headers are blocked because xJWT manages them.
+- A successful probe result is based on HTTP behavior: the original control is expected to be accepted, while intentionally invalid mutations are expected to be rejected.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+These checks assist authorized testing; they do not prove that an implementation is secure.
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the [MIT License](LICENSE).
 
-## 🙏 Acknowledgments
+## Links
 
-- **[jwt_tool](https://github.com/ticarpi/jwt_tool)** by @ticarpi - The powerful JWT testing toolkit that powers our cracking capabilities
-- **[JWT.io](https://jwt.io)** - Inspiration for the user interface design
-- **Security Community** - For continuous feedback and improvement suggestions
-
-## 🔗 Links
-
-- **🌐 Live Demo**: [https://xjwt.io](https://xjwt.io)
-- **📚 Documentation**: [https://docs.exploit-forge.com](https://docs.exploit-forge.com)
-- **🐛 Bug Reports**: [GitHub Issues](https://github.com/exploit-forge/xjwt/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/exploit-forge/xjwt/discussions)
-
-## 📞 Support
-
-- **Website**: [https://exploit-forge.com](https://exploit-forge.com)
-- **Email**: security@exploit-forge.com
-- **Twitter**: [@ExploitforgeLTD](https://twitter.com/exploitforgeltd)
-- **LinkedIn**: [Exploit-forge LTD](https://linkedin.com/company/exploit-forge)
-
----
-
-<div align="center">
-  <sub>Built with ❤️ by <a href="https://exploit-forge.com">Exploit-forge LTD</a></sub>
-</div>
+- [xJWT](https://xjwt.io)
+- [Exploit Forge](https://www.exploit-forge.com)
+- [Issue tracker](https://github.com/exploit-forge/xjwt/issues)

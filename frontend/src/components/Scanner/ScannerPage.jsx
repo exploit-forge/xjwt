@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { SecurityGauge } from './SecurityGauge'
 import { RiskGauge } from './RiskGauge'
 import { ScanResults } from './ScanResults'
@@ -10,11 +10,21 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
   const [scanToken, setScanToken] = useState(initialToken)
   const [scanResults, setScanResults] = useState(null)
   const [isScanning, setIsScanning] = useState(false)
+  const gaugesRef = useRef(null)
 
   // Update local token when prop changes
   useEffect(() => {
     setScanToken(initialToken)
   }, [initialToken])
+
+  useEffect(() => {
+    if (!scanResults || scanResults.error || !gaugesRef.current) return undefined
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const scrollTimer = window.setTimeout(() => {
+      gaugesRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    }, 120)
+    return () => window.clearTimeout(scrollTimer)
+  }, [scanResults])
 
   const attemptSecretCrack = async (token) => {
     return new Promise((resolve, reject) => {
@@ -529,6 +539,7 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
     }
 
     setIsScanning(true)
+    setScanResults(null)
     
     try {
       // Simulate scanning delay for better UX
@@ -868,7 +879,6 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
     <div className="scanner-page max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       {/* Header */}
       <div className="page-hero scanner-hero text-center">
-        <span className="scanner-page-kicker">LOCAL JWT AUDIT</span>
         <h1>
           JWT Security Scanner
         </h1>
@@ -898,7 +908,7 @@ const ScannerPage = ({ token: initialToken = '', setToken: setAppToken }) => {
           ) : (
             <>
               {/* Gauges */}
-              <div className="scanner-score-grid">
+              <div className="scanner-score-grid" ref={gaugesRef}>
                 <SecurityGauge score={scanResults.securityScore} />
                 <RiskGauge score={scanResults.riskScore} />
               </div>

@@ -100,13 +100,23 @@ function TokenInput({ token, setToken, onTokenChange }) {
 
       <div className="token-input-panel workspace-panel p-1.5">
         <div className="workspace-panel-toolbar">
-          <span className="flex items-center gap-2 text-sm font-medium text-gray-300">
+          <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <span className="font-mono text-orange-400">›_</span> JSON Web Token (JWT)
           </span>
           {token && (
             <div className="flex items-center gap-1">
-              <button onClick={copyToClipboard} className="workspace-icon-button" title="Copy token" aria-label="Copy token">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              <button
+                onClick={copyToClipboard}
+                className={`workspace-icon-button ${copyStatus ? 'text-green-500' : ''}`}
+                title={copyStatus ? 'Copied' : 'Copy token'}
+                aria-label={copyStatus ? 'Token copied' : 'Copy token'}
+                aria-live="polite"
+              >
+                {copyStatus ? (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12.5l4.2 4.2L19 7" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                )}
               </button>
               <button onClick={clearToken} className="workspace-icon-button" title="Clear token" aria-label="Clear token">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -125,7 +135,6 @@ function TokenInput({ token, setToken, onTokenChange }) {
           />
           
         </div>
-        {copyStatus && <p className="px-2 pt-2 text-right text-xs text-green-400">{copyStatus}</p>}
         </div>
       </div>
 
