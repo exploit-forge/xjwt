@@ -1,25 +1,37 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+const INITIAL_DELAY_MS = 60 * 1000;
+const REPEAT_INTERVAL_MS = 10 * 60 * 1000;
+const AUTO_HIDE_MS = 10 * 1000;
 
 const PromoNotification = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    // Check if notification was recently shown
-    const lastShown = localStorage.getItem('exploitForgePromoLastShown');
-    const now = Date.now();
-    const fiveMinutes = 1 * 60 * 1000; // 1 minutes in milliseconds
+    let repeatTimer;
 
-    // Show notification if it hasn't been shown in the last 5 minutes
-    if (!lastShown || (now - parseInt(lastShown)) > fiveMinutes) {
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-        setIsAnimating(true);
-        localStorage.setItem('exploitForgePromoLastShown', now.toString());
-      }, 60000); // Show after 60 seconds of page load
+    const showPromo = () => {
+      const shownAt = Date.now();
+      setIsVisible(true);
+      setIsAnimating(true);
+      try {
+        localStorage.setItem('exploitForgePromoLastShown', shownAt.toString());
+      } catch {
+        // Storage can be unavailable in Safari private browsing; the popup should still render.
+      }
+    };
 
-      return () => clearTimeout(timer);
-    }
+    const firstTimer = window.setTimeout(() => {
+      showPromo();
+      repeatTimer = window.setInterval(showPromo, REPEAT_INTERVAL_MS);
+    }, INITIAL_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(firstTimer);
+      if (repeatTimer) window.clearInterval(repeatTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -27,7 +39,7 @@ const PromoNotification = () => {
       // Auto-hide after 10 seconds
       const autoHideTimer = setTimeout(() => {
         handleClose();
-      }, 10000);
+      }, AUTO_HIDE_MS);
 
       return () => clearTimeout(autoHideTimer);
     }
@@ -47,10 +59,22 @@ const PromoNotification = () => {
 
   if (!isVisible) return null;
 
-  return (
-    <div className={`fixed bottom-4 right-4 z-50 max-w-sm transition-all duration-300 ease-out ${
+  return createPortal(
+    <div
+      className={`max-w-sm transition-all duration-300 ease-out ${
       isAnimating ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-    }`}>
+      }`}
+      style={{
+        position: 'fixed',
+        right: 'max(1rem, env(safe-area-inset-right))',
+        bottom: 'max(1rem, env(safe-area-inset-bottom))',
+        top: 'auto',
+        left: 'auto',
+        zIndex: 9999,
+        width: 'min(24rem, calc(100vw - 2rem))',
+        margin: 0,
+      }}
+    >
       <div className="bg-gradient-to-br from-orange-600 to-red-700 rounded-lg shadow-2xl border border-orange-400/30 overflow-hidden">
         {/* Header */}
         <div className="bg-orange-500/10 px-4 py-2 flex items-center justify-between">
@@ -109,7 +133,8 @@ const PromoNotification = () => {
           <div className="h-full bg-orange-400 animate-[shrink_10s_linear_forwards]"></div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

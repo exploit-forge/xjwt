@@ -1476,7 +1476,7 @@
 }
 
 .dark .dark\:bg-gray-800,
-.dark .dark\:bg-gray-900 {
+.dark .dark\:bg-gray-900:not(body) {
   backdrop-filter: blur(8px);
 }
 

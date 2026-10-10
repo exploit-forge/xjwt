@@ -6,6 +6,8 @@
 
 # xJWT — JWT Security Checker
 
+**Built by [Al-Amir Badmus](https://github.com/Commando-X) for [Exploit Forge LTD](https://www.exploit-forge.com).**
+
 xJWT is a browser-based workspace for decoding, editing, signing, verifying, scanning, and testing JSON Web Tokens. It combines local JWT tooling with an optional backend security worker for dictionary cracking, probe generation, and explicitly authorized endpoint tests.
 
 > Use xJWT only with tokens and systems you own or have explicit permission to test.
