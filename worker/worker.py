@@ -1,118 +1,74 @@
-import os
 import asyncio
-import tempfile
-from fastapi import FastAPI
-from pydantic import BaseModel
 import hashlib
-import re
+import os
+
 import httpx
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-JWT_TOOL_PATH = "/opt/jwt_tool/jwt_tool.py"
-DEFAULT_WORDLIST = "/opt/app/common_secrets.txt"
+from security_engine import TokenError, analyze_token, crack_hmac_token, generate_playbook, iter_candidates
+
+
+DEFAULT_WORDLIST = os.getenv("XJWT_WORDLIST_PATH", "/opt/app/common_secrets.txt")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
+MAX_CUSTOM_WORDLIST_BYTES = 2 * 1024 * 1024
+app = FastAPI(title="xjwt security worker")
 
-app = FastAPI()
 
 class CrackRequest(BaseModel):
     token: str
     wordlist: str | None = None
 
+
+class TokenRequest(BaseModel):
+    token: str
+
+
+async def log_line(line):
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            await client.post(f"{BACKEND_URL}/worker/results", json={"line": line})
+    except httpx.HTTPError:
+        pass
+
+
 @app.post("/crack")
 async def crack(req: CrackRequest):
-    wordlist_path = DEFAULT_WORDLIST
-    temp_wordlist = None
-    
     try:
-        # If wordlist content is provided, create a temporary file
         if req.wordlist and req.wordlist.strip():
-            # Create a temporary file for the custom wordlist
-            temp_wordlist = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
-            temp_wordlist.write(req.wordlist)
-            temp_wordlist.flush()
-            temp_wordlist.close()
-            wordlist_path = temp_wordlist.name
-            
-            # Log that we're using a custom wordlist
-            async with httpx.AsyncClient() as client:
-                await client.post(f"{BACKEND_URL}/worker/results", 
-                                json={"line": f"Using custom wordlist with {len(req.wordlist.splitlines())} entries"})
+            source = req.wordlist.encode("utf-8")
+            if len(source) > MAX_CUSTOM_WORDLIST_BYTES:
+                raise HTTPException(status_code=413, detail="Custom wordlist exceeds 2 MB")
+            await log_line(f"Using custom wordlist with {len(req.wordlist.splitlines())} entries")
         else:
-            # Log that we're using the default wordlist
-            async with httpx.AsyncClient() as client:
-                await client.post(f"{BACKEND_URL}/worker/results", 
-                                json={"line": "Using default wordlist with 100+ common secrets"})
+            with open(DEFAULT_WORDLIST, "rb") as wordlist_file:
+                source = wordlist_file.read()
+            await log_line(f"Using default wordlist with {len(source.splitlines())} entries")
+        secret, tested = await asyncio.to_thread(crack_hmac_token, req.token, iter_candidates(source))
+        if secret is None:
+            await log_line(f"Tested {tested:,} candidates; key not found")
+            return {"status": "completed", "tested": tested}
+        await log_line(f"Secret found after {tested:,} candidates")
+        return {"status": "completed", "secret": secret, "hash": hashlib.sha256(secret.encode()).hexdigest(), "tested": tested, "message": "JWT key successfully recovered"}
+    except TokenError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
 
-        cmd = [
-            "python",
-            JWT_TOOL_PATH,
-            # "-b",
-            "-C",
-            "-d",
-            wordlist_path,
-            req.token,
-        ]
-        
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        
-        secret = None
-        expect_next = False
-        ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
-        
-        async with httpx.AsyncClient() as client:
-            async for line_bytes in process.stdout:
-                line = line_bytes.decode()
-                clean_line = ansi_escape.sub('', line).strip()
 
-                # Filter out unwanted lines
-                if clean_line in ("", "/root/.jwt_tool/jwtconf.ini"):
-                    continue
+@app.post("/analyze")
+async def analyze(req: TokenRequest):
+    try:
+        return await asyncio.to_thread(analyze_token, req.token)
+    except TokenError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-                await client.post(f"{BACKEND_URL}/worker/results", json={"line": clean_line})
-                text = clean_line
-                
-                # Handle case where secret is on the next line after "CORRECT key found:"
-                if expect_next and text:
-                    secret = text
-                    expect_next = False
-                
-                # Handle both jwt_tool output formats
-                if "CORRECT key" in text:
-                    # Format 1: "[+] your-256-bit-secret is the CORRECT key!"
-                    m1 = re.search(r"\[\+\]\s*(.+?)\s+is the CORRECT key!", text)
-                    if m1:
-                        secret = m1.group(1).strip()
-                    
-                    # Format 2: "[+] CORRECT key found:" (secret on next line)
-                    elif "CORRECT key found:" in text:
-                        expect_next = True
-                
-                if secret:
-                    try:
-                        process.kill()
-                    except ProcessLookupError:
-                        pass
-                    await process.wait()
-                    break
-            else:
-                await process.wait()
 
-        result = {"status": "completed"}
-        if secret:
-            result.update({
-                "secret": secret,
-                "hash": hashlib.sha256(secret.encode()).hexdigest(),
-                "message": f"JWT Key successfully cracked: {secret}"
-            })
-        return result
-        
-    finally:
-        # Clean up temporary wordlist file if it was created
-        if temp_wordlist and os.path.exists(temp_wordlist.name):
-            try:
-                os.unlink(temp_wordlist.name)
-            except OSError:
-                pass  # Ignore cleanup errors
+@app.post("/playbook")
+async def playbook(req: TokenRequest):
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(generate_playbook, req.token), timeout=5)
+    except TokenError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except TimeoutError as exc:
+        raise HTTPException(status_code=408, detail="Playbook generation timed out") from exc

@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnly = false }) {
   const [tooltip, setTooltip] = useState({ show: false, content: '', x: 0, y: 0 })
@@ -52,9 +53,19 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
       return
     }
     if (isEditing && textareaRef.current) {
+      textareaRef.current.scrollTop = 0
       textareaRef.current.focus()
     }
   }, [readOnly, isEditing])
+
+  useLayoutEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.scrollTop = 0
+    }
+    if (highlightRef.current) {
+      highlightRef.current.scrollTop = 0
+    }
+  }, [isEditing])
 
   const isTimestamp = (value) => {
     const num = Number(value)
@@ -185,7 +196,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
         ? 'json-string cursor-help border-b border-dotted border-amber-400/70 dark:border-amber-300/70'
         : 'json-string'
       return (
-        <span className={valueClasses} {...tooltipHandlers(hint)}>
+        <span className={valueClasses} title={hint || undefined} {...tooltipHandlers(hint)}>
           {JSON.stringify(value)}
         </span>
       )
@@ -197,7 +208,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
         ? 'json-number cursor-help border-b border-dotted border-amber-400/70 dark:border-amber-300/70'
         : 'json-number'
       return (
-        <span className={valueClasses} {...tooltipHandlers(hint)}>
+        <span className={valueClasses} title={hint || undefined} {...tooltipHandlers(hint)}>
           {String(value)}
         </span>
       )
@@ -244,7 +255,7 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
     return (
       <div className="relative">
         <div
-          className={`w-full h-32 p-3 font-mono text-sm bg-transparent overflow-auto whitespace-pre text-gray-700 dark:text-gray-300 ${
+          className={`decoded-json-view w-full p-3 font-mono text-sm bg-transparent whitespace-pre text-gray-700 dark:text-gray-300 ${
             readOnly ? '' : 'cursor-text'
           }`}
           onClick={readOnly ? undefined : () => setIsEditing(true)}
@@ -265,16 +276,17 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
           {parsedData ? renderValue(parsedData, null, 0) : (editedData || '')}
         </div>
 
-        {tooltip.show && (
+        {tooltip.show && createPortal(
           <div
-            className="fixed z-50 px-3 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded shadow-lg pointer-events-none max-w-xs"
+            className="fixed z-[100] px-3 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded shadow-lg pointer-events-none max-w-xs"
             style={{
               left: tooltip.x + 10,
               top: tooltip.y - 40
             }}
           >
             {tooltip.content}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     )
@@ -291,16 +303,33 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
 
   const syncEditorScroll = (event) => {
     if (!highlightRef.current) return
-    highlightRef.current.scrollTop = event.currentTarget.scrollTop
     highlightRef.current.scrollLeft = event.currentTarget.scrollLeft
   }
 
+  const handleEditorPointerMove = (event) => {
+    const editor = event.currentTarget
+    const bounds = editor.getBoundingClientRect()
+    const styles = window.getComputedStyle(editor)
+    const lineHeight = Number.parseFloat(styles.lineHeight) || 20
+    const paddingTop = Number.parseFloat(styles.paddingTop) || 0
+    const lineIndex = Math.floor((event.clientY - bounds.top + editor.scrollTop - paddingTop) / lineHeight)
+    const line = (editedData || '').split('\n')[lineIndex] || ''
+    const match = line.match(/^\s*"([^"]+)"\s*:\s*(-?\d+(?:\.\d+)?)/)
+    const hint = match ? getTimestampHint(match[1], match[2]) : ''
+
+    if (hint) {
+      showTooltip(hint, event)
+    } else if (tooltip.show) {
+      hideTooltip()
+    }
+  }
+
   return (
-    <div className="relative h-32">
+    <div className="decoded-json-editor relative">
       <pre
         ref={highlightRef}
         aria-hidden="true"
-        className="absolute inset-0 m-0 p-3 font-mono text-sm leading-normal overflow-hidden whitespace-pre text-gray-700 dark:text-gray-300 pointer-events-none"
+        className="decoded-json-highlight m-0 p-3 font-mono text-sm leading-normal whitespace-pre text-gray-700 dark:text-gray-300 pointer-events-none"
       >
         {renderEditableJson(editedData || '')}
       </pre>
@@ -310,11 +339,22 @@ function JSONWithTimestampTooltips({ data, editedData, onChange, onBlur, readOnl
         onChange={onChange}
         onBlur={handleBlur}
         onScroll={syncEditorScroll}
-        className="relative z-10 w-full h-32 p-3 font-mono text-sm leading-normal bg-transparent text-transparent caret-gray-900 dark:caret-white border-0 focus:ring-0 resize-none whitespace-pre overflow-auto"
+        onPointerMove={handleEditorPointerMove}
+        onPointerLeave={hideTooltip}
+        className="decoded-json-textarea absolute inset-0 z-10 w-full h-full p-3 font-mono text-sm leading-normal bg-transparent text-transparent caret-gray-900 dark:caret-white border-0 focus:ring-0 resize-none whitespace-pre overflow-x-auto overflow-y-hidden"
         spellCheck={false}
         wrap="off"
         placeholder="Edit JSON here..."
       />
+      {tooltip.show && createPortal(
+        <div
+          className="fixed z-[100] px-3 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded shadow-lg pointer-events-none max-w-xs"
+          style={{ left: tooltip.x + 10, top: tooltip.y - 40 }}
+        >
+          {tooltip.content}
+        </div>,
+        document.body
+      )}
     </div>
   )
 

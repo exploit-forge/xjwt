@@ -11,6 +11,9 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/manrope": "^5.2.6",
+    "@fontsource/roboto-mono": "^5.2.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
