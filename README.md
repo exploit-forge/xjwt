@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://xjwt.io">
+    <img src="docs/assets/xjwt-readme-banner.png" alt="xJWT — JWT Security Checker" width="100%" />
+  </a>
+</p>
+
 # xJWT — JWT Security Checker
 
 xJWT is a browser-based workspace for decoding, editing, signing, verifying, scanning, and testing JSON Web Tokens. It combines local JWT tooling with an optional backend security worker for dictionary cracking, probe generation, and explicitly authorized endpoint tests.
